@@ -69,7 +69,8 @@ export const initialEquipment: Equipment[] = [
     installationDate: '2026-05-11',
     lastMaintenanceDate: '2026-05-11',
     notes: 'Equipamento inverter ultra silencioso.',
-    status: 'active'
+    status: 'active',
+    photoUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=400&q=80'
   },
   {
     id: 'e2',
@@ -111,7 +112,8 @@ export const initialEquipment: Equipment[] = [
     installationDate: '2026-06-02',
     lastMaintenanceDate: '2026-06-02',
     notes: ' Windfree, sem vento direto.',
-    status: 'active'
+    status: 'active',
+    photoUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=400&q=80'
   }
 ];
 
@@ -201,7 +203,9 @@ export const initialServiceOrders: ServiceOrder[] = [
     partsValue: 45.00,
     totalValue: 265.00,
     paymentStatus: 'paid',
-    notes: 'Alerta ao cliente sobre manter a limpeza do filtro semanal na cozinha.'
+    notes: 'Alerta ao cliente sobre manter a limpeza do filtro semanal na cozinha.',
+    photoUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80',
+    photoDescription: 'Higienização profunda das serpentinas e dreno concluída. Desobstrução realizada com sucesso.'
   },
   {
     id: 'OS-2026-0003',

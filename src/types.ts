@@ -34,6 +34,7 @@ export interface Equipment {
   lastMaintenanceDate?: string;
   notes?: string;
   status: 'active' | 'maintenance' | 'inactive';
+  photoUrl?: string;
 }
 
 export type ServiceType = 'Instalação' | 'Manutenção Preventiva' | 'Manutenção Corretiva' | 'Orçamento' | 'Visita Técnica';
@@ -80,6 +81,8 @@ export interface ServiceOrder {
   totalValue: number;
   paymentStatus: 'pending' | 'paid';
   notes?: string;
+  photoUrl?: string;
+  photoDescription?: string;
 }
 
 export interface Transaction {

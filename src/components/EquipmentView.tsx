@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Equipment, Customer, EquipmentType, EquipmentBrand } from '../types';
-import { Search, Plus, Cpu, User, Calendar, Settings, Tag, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
+import { Search, Plus, Cpu, User, Calendar, Settings, Tag, Edit2, Trash2, X, AlertCircle, Camera, Image, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface EquipmentViewProps {
@@ -60,6 +60,7 @@ export default function EquipmentView({
   const [formLastMaintenanceDate, setFormLastMaintenanceDate] = useState('');
   const [formNotes, setFormNotes] = useState('');
   const [formStatus, setFormStatus] = useState<'active' | 'maintenance' | 'inactive'>('active');
+  const [formPhotoUrl, setFormPhotoUrl] = useState('');
 
   const getCustomerName = (customerId: string) => {
     const customer = customers.find(c => c.id === customerId);
@@ -93,6 +94,7 @@ export default function EquipmentView({
     setFormLastMaintenanceDate('');
     setFormNotes('');
     setFormStatus('active');
+    setFormPhotoUrl('');
     setIsModalOpen(true);
   };
 
@@ -110,6 +112,7 @@ export default function EquipmentView({
     setFormLastMaintenanceDate(eq.lastMaintenanceDate || '');
     setFormNotes(eq.notes || '');
     setFormStatus(eq.status);
+    setFormPhotoUrl(eq.photoUrl || '');
     setIsModalOpen(true);
   };
 
@@ -128,7 +131,8 @@ export default function EquipmentView({
       installationDate: formInstallationDate || undefined,
       lastMaintenanceDate: formLastMaintenanceDate || undefined,
       notes: formNotes || undefined,
-      status: formStatus
+      status: formStatus,
+      photoUrl: formPhotoUrl || undefined
     };
 
     if (modalMode === 'add') {
@@ -220,6 +224,17 @@ export default function EquipmentView({
                       {eq.status === 'active' ? '● Ativo' : eq.status === 'maintenance' ? '🔧 Em Manutenção' : '● Inativo'}
                     </span>
                   </div>
+
+                  {eq.photoUrl && (
+                    <div className="relative w-full h-36 rounded-xl overflow-hidden mt-3 bg-slate-50 border border-slate-100 shrink-0">
+                      <img
+                        src={eq.photoUrl}
+                        alt={`${eq.brand} ${eq.model}`}
+                        className="w-full h-full object-cover hover:scale-105 transition duration-300"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  )}
 
                   <h3 className="font-bold text-slate-800 text-base mt-3">{eq.brand} <span className="font-medium text-slate-500 text-sm">{eq.capacityBtu.toLocaleString()} BTU</span></h3>
                   <p className="text-xs text-slate-500 mt-1">Modelo: <span className="font-medium text-slate-700">{eq.model}</span></p>
@@ -443,6 +458,77 @@ export default function EquipmentView({
                       <option value="maintenance" className="text-yellow-600">🔧 Em Manutenção</option>
                       <option value="inactive" className="text-slate-600">● Inativo</option>
                     </select>
+                  </div>
+                </div>
+
+                {/* Photo space */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-medium text-slate-600">Foto Ilustrativa ou Real do Aparelho</label>
+                  {formPhotoUrl ? (
+                    <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-50 h-44 flex items-center justify-center">
+                      <img
+                        src={formPhotoUrl}
+                        alt="Preview"
+                        className="max-h-full max-w-full object-contain"
+                        referrerPolicy="no-referrer"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormPhotoUrl('')}
+                        className="absolute top-2 right-2 p-1.5 bg-slate-900/70 text-white rounded-full hover:bg-slate-900 transition"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-blue-400 transition bg-slate-50/50">
+                      <Upload className="mx-auto text-slate-400 mb-2" size={24} />
+                      <p className="text-xs font-medium text-slate-600">Arraste ou clique para carregar uma imagem</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">JPG ou PNG (recomendado até 300KB)</p>
+                      <input
+                        id="equipment-file-input"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              if (typeof reader.result === 'string') {
+                                setFormPhotoUrl(reader.result);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="equipment-file-input"
+                        className="mt-3 inline-block px-3 py-1.5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg text-xs hover:bg-slate-50 transition cursor-pointer"
+                      >
+                        Selecionar Imagem
+                      </label>
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Ou escolha um modelo pronto:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { name: 'Split Parede', url: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=400&q=80' },
+                        { name: 'Condensadora', url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80' },
+                        { name: 'Piso Teto', url: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=400&q=80' }
+                      ].map(preset => (
+                        <button
+                          key={preset.name}
+                          type="button"
+                          onClick={() => setFormPhotoUrl(preset.url)}
+                          className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded text-[9px] transition"
+                        >
+                          {preset.name}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 

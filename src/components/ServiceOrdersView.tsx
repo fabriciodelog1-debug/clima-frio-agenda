@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ServiceOrder, Customer, Equipment, OSStatus, OSChecklist } from '../types';
-import { Search, Plus, FileText, CheckSquare, Square, DollarSign, Printer, Calendar, ShieldCheck, X, Edit2, AlertCircle } from 'lucide-react';
+import { Search, Plus, FileText, CheckSquare, Square, DollarSign, Printer, Calendar, ShieldCheck, X, Edit2, AlertCircle, Upload, Camera, Image } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface ServiceOrdersViewProps {
@@ -61,6 +61,8 @@ export default function ServiceOrdersView({
     sanitizeUnit: false
   });
   const [formNotes, setFormNotes] = useState('');
+  const [formPhotoUrl, setFormPhotoUrl] = useState('');
+  const [formPhotoDescription, setFormPhotoDescription] = useState('');
 
   // Handle pre-fill from agenda if trigger exists
   React.useEffect(() => {
@@ -86,6 +88,8 @@ export default function ServiceOrdersView({
         sanitizeUnit: false
       });
       setFormNotes('');
+      setFormPhotoUrl('');
+      setFormPhotoDescription('');
       setIsModalOpen(true);
       if (onClearActiveOSCreation) {
         onClearActiveOSCreation();
@@ -136,6 +140,8 @@ export default function ServiceOrdersView({
       sanitizeUnit: false
     });
     setFormNotes('');
+    setFormPhotoUrl('');
+    setFormPhotoDescription('');
     setIsModalOpen(true);
   };
 
@@ -153,6 +159,8 @@ export default function ServiceOrdersView({
     setFormPaymentStatus(so.paymentStatus);
     setFormChecklist(so.checklist);
     setFormNotes(so.notes || '');
+    setFormPhotoUrl(so.photoUrl || '');
+    setFormPhotoDescription(so.photoDescription || '');
     setIsModalOpen(true);
   };
 
@@ -186,7 +194,9 @@ export default function ServiceOrdersView({
       paymentStatus: formPaymentStatus,
       dateOpened: modalMode === 'add' ? new Date().toISOString().split('T')[0] : serviceOrders.find(s => s.id === formId)?.dateOpened || new Date().toISOString().split('T')[0],
       dateClosed: formStatus === 'completed' ? new Date().toISOString().split('T')[0] : undefined,
-      notes: formNotes || undefined
+      notes: formNotes || undefined,
+      photoUrl: formPhotoUrl || undefined,
+      photoDescription: formPhotoDescription || undefined
     };
 
     if (modalMode === 'add') {
@@ -462,6 +472,29 @@ export default function ServiceOrdersView({
                           </div>
                         </div>
 
+                        {/* Photo Evidence in Ficha Técnica */}
+                        {selectedOS.photoUrl && (
+                          <div className="text-xs border-b border-slate-200 pb-4">
+                            <h4 className="font-bold text-slate-700 uppercase tracking-wide mb-2">REGISTRO FOTOGRÁFICO DO ATENDIMENTO / PEÇAS</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-3 rounded border border-slate-100 items-center">
+                              <div className="max-h-48 overflow-hidden rounded border border-slate-200 bg-white flex items-center justify-center p-1">
+                                <img
+                                  src={selectedOS.photoUrl}
+                                  alt="Registro do Atendimento"
+                                  className="max-h-44 object-contain rounded"
+                                  referrerPolicy="no-referrer"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <p className="font-bold text-slate-700">Evidência / Peça Substituída:</p>
+                                <p className="text-slate-600 leading-relaxed italic">
+                                  {selectedOS.photoDescription || 'Foto ilustrativa documentando as ações executadas no equipamento.'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Values Summary */}
                         <div className="flex justify-between items-center text-xs">
                           <div>
@@ -608,6 +641,29 @@ export default function ServiceOrdersView({
                             </p>
                           )}
                         </div>
+
+                        {/* Service Photo Evidence in Standard Dashboard */}
+                        {selectedOS.photoUrl && (
+                          <div className="p-4 border border-slate-100 rounded-xl space-y-3">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Evidência Fotográfica do Serviço</h4>
+                            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                              <div className="w-full sm:w-48 h-36 rounded-lg overflow-hidden border border-slate-100 shrink-0 bg-slate-50 flex items-center justify-center">
+                                <img
+                                  src={selectedOS.photoUrl}
+                                  alt="Evidência do Serviço"
+                                  className="max-h-full max-w-full object-contain"
+                                  referrerPolicy="no-referrer"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <p className="text-xs text-slate-400 font-semibold uppercase">Descrição da Foto / Peça</p>
+                                <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                                  {selectedOS.photoDescription || 'Sem observações anexas à imagem.'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         {/* Financial summary card */}
                         <div className="p-5 bg-slate-800 text-white rounded-2xl flex flex-col md:flex-row justify-between gap-6 items-start md:items-center">
@@ -776,6 +832,98 @@ export default function ServiceOrdersView({
                       placeholder="Descrição detalhada das ações tomadas (carga de gás, troca de capacitor, desobstrução)..."
                       className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
                     />
+                  </div>
+                </div>
+
+                {/* Photo Space for OS */}
+                <div className="space-y-3 pt-4 border-t border-slate-100">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-blue-600">Registro Fotográfico / Foto do Serviço</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Upload de Foto (Peça trocada / Evidência)</label>
+                      {formPhotoUrl ? (
+                        <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-50 h-36 flex items-center justify-center">
+                          <img
+                            src={formPhotoUrl}
+                            alt="Preview Peça"
+                            className="max-h-full max-w-full object-contain"
+                            referrerPolicy="no-referrer"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormPhotoUrl('')}
+                            className="absolute top-2 right-2 p-1.5 bg-slate-900/70 text-white rounded-full hover:bg-slate-900 transition"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="border border-dashed border-slate-200 rounded-xl p-3 text-center bg-slate-50 hover:border-blue-400 transition flex flex-col justify-center h-36">
+                          <Upload className="mx-auto text-slate-400 mb-1.5" size={20} />
+                          <p className="text-xs font-semibold text-slate-600">Arraste ou clique para enviar foto</p>
+                          <input
+                            id="os-file-input"
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  if (typeof reader.result === 'string') {
+                                    setFormPhotoUrl(reader.result);
+                                  }
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                            className="hidden"
+                          />
+                          <label
+                            htmlFor="os-file-input"
+                            className="mt-2 inline-block px-2.5 py-1 bg-white border border-slate-200 text-slate-700 font-semibold rounded text-[11px] hover:bg-slate-50 transition cursor-pointer self-center"
+                          >
+                            Selecionar Foto
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Descrição do Registro Fotográfico</label>
+                        <input
+                          type="text"
+                          value={formPhotoDescription}
+                          onChange={(e) => setFormPhotoDescription(e.target.value)}
+                          placeholder="Ex: Novo capacitor de 35uF 440VAC instalado."
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Ou simule uma foto técnica:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {[
+                            { name: 'Troca de Capacitor', url: 'https://images.unsplash.com/photo-1517055729445-fa7d27394b48?auto=format&fit=crop&w=400&q=80' },
+                            { name: 'Filtro Lavado', url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80' },
+                            { name: 'Pressão do Gás', url: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=400&q=80' }
+                          ].map(preset => (
+                            <button
+                              key={preset.name}
+                              type="button"
+                              onClick={() => {
+                                setFormPhotoUrl(preset.url);
+                                if (!formPhotoDescription) {
+                                  setFormPhotoDescription(preset.name === 'Troca de Capacitor' ? 'Instalação de capacitor novo.' : preset.name === 'Filtro Lavado' ? 'Higienização profunda concluída.' : 'Manômetro acoplado para aferir pressão.');
+                                }
+                              }}
+                              className="px-1.5 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded text-[9px] transition"
+                            >
+                              {preset.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
