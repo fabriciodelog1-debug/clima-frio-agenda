@@ -1,0 +1,6 @@
+{
+  "name": "Clima Frio",
+  "description": "Sistema de gestão completo para empresas de refrigeração e climatização (HVAC). Controle de clientes, equipamentos, agenda, ordens de serviço com checklist técnico e financeiro.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
