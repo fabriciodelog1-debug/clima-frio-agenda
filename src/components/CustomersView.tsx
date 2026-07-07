@@ -39,6 +39,62 @@ export default function CustomersView({
   const [formState, setFormState] = useState('SP');
   const [formCep, setFormCep] = useState('');
   const [formNotes, setFormNotes] = useState('');
+  const [isLoadingCnpj, setIsLoadingCnpj] = useState(false);
+
+  const handleFetchCnpj = async () => {
+    const cleanCnpj = formCpfCnpj.replace(/\D/g, '');
+    if (cleanCnpj.length !== 14) {
+      alert('Por favor, digite um CNPJ válido com 14 dígitos (somente números ou com pontuação).');
+      return;
+    }
+
+    setIsLoadingCnpj(true);
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
+      if (!response.ok) {
+        throw new Error('Não foi possível encontrar este CNPJ ou a API está indisponível.');
+      }
+      const data = await response.json();
+      
+      if (data.razao_social) {
+        setFormName(data.nome_fantasia || data.razao_social);
+      }
+      if (data.email) {
+        setFormEmail(data.email);
+      }
+      if (data.ddd_telefone_1 && data.telefone_1) {
+        setFormPhone(`(${data.ddd_telefone_1}) ${data.telefone_1}`);
+      } else if (data.telefone_1) {
+        setFormPhone(data.telefone_1);
+      }
+      if (data.cep) {
+        setFormCep(data.cep);
+      }
+      if (data.logradouro) {
+        setFormStreet(data.logradouro);
+      }
+      if (data.numero) {
+        setFormNumber(data.numero);
+      }
+      if (data.complemento) {
+        setFormComplement(data.complemento);
+      }
+      if (data.bairro) {
+        setFormNeighborhood(data.bairro);
+      }
+      if (data.municipio) {
+        setFormCity(data.municipio);
+      }
+      if (data.uf) {
+        setFormState(data.uf.toUpperCase());
+      }
+    } catch (err: any) {
+      alert('Erro ao buscar CNPJ. Verifique se digitou corretamente ou tente novamente.');
+      console.error(err);
+    } finally {
+      setIsLoadingCnpj(false);
+    }
+  };
 
   // Search filter
   const filteredCustomers = customers.filter(c => 
@@ -419,14 +475,31 @@ export default function CustomersView({
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-600 mb-1">CPF / CNPJ</label>
-                      <input
-                        id="form-customer-cpf"
-                        type="text"
-                        value={formCpfCnpj}
-                        onChange={(e) => setFormCpfCnpj(e.target.value)}
-                        placeholder="Ex: 123.456.789-00 ou 12.345.678/0001-00"
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm font-mono"
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          id="form-customer-cpf"
+                          type="text"
+                          value={formCpfCnpj}
+                          onChange={(e) => setFormCpfCnpj(e.target.value)}
+                          placeholder="Ex: 12.345.678/0001-99"
+                          className="flex-1 min-w-0 px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleFetchCnpj}
+                          disabled={isLoadingCnpj || !formCpfCnpj.replace(/\D/g, '')}
+                          className="px-3 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-100 transition text-xs font-semibold shrink-0 flex items-center gap-1.5 disabled:opacity-40"
+                          title="Buscar dados do CNPJ na Receita Federal"
+                        >
+                          {isLoadingCnpj ? (
+                            <span className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                          ) : (
+                            <Search size={14} />
+                          )}
+                          <span>Buscar CNPJ</span>
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1">Insira o CNPJ com 14 dígitos e clique em "Buscar CNPJ" para preenchimento automático.</p>
                     </div>
                   </div>
 

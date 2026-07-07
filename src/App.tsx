@@ -114,13 +114,14 @@ export default function App() {
 
   // MUTATORS
   // Customers
-  const handleAddCustomer = (c: Omit<Customer, 'id' | 'createdAt'>) => {
+  const handleAddCustomer = (c: Omit<Customer, 'id' | 'createdAt'>): Customer => {
     const newCustomer: Customer = {
       ...c,
       id: `cust-${Date.now()}`,
       createdAt: new Date().toISOString()
     };
     saveState('climafrio_customers', [newCustomer, ...customers], setCustomers);
+    return newCustomer;
   };
 
   const handleEditCustomer = (c: Customer) => {
@@ -137,12 +138,13 @@ export default function App() {
   };
 
   // Equipment
-  const handleAddEquipment = (eq: Omit<Equipment, 'id'>) => {
+  const handleAddEquipment = (eq: Omit<Equipment, 'id'>): Equipment => {
     const newEquipment: Equipment = {
       ...eq,
       id: `equip-${Date.now()}`
     };
     saveState('climafrio_equipment', [newEquipment, ...equipment], setEquipment);
+    return newEquipment;
   };
 
   const handleEditEquipment = (eq: Equipment) => {
@@ -388,6 +390,8 @@ export default function App() {
               onDeleteOS={handleDeleteOS}
               activeOSForCreation={activeOSForCreation}
               onClearActiveOSCreation={() => setActiveOSForCreation(null)}
+              onAddCustomer={handleAddCustomer}
+              onAddEquipment={handleAddEquipment}
             />
           )}
 

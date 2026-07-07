@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ServiceOrder, Customer, Equipment, OSStatus, OSChecklist } from '../types';
-import { Search, Plus, FileText, CheckSquare, Square, DollarSign, Printer, Calendar, ShieldCheck, X, Edit2, AlertCircle, Upload, Camera, Image } from 'lucide-react';
+import { Search, Plus, FileText, CheckSquare, Square, DollarSign, Printer, Calendar, ShieldCheck, X, Edit2, AlertCircle, Upload, Camera, Image, Share2, FileDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { generateOSPDF, getWhatsAppShareText } from '../utils/pdfGenerator';
 
 interface ServiceOrdersViewProps {
   serviceOrders: ServiceOrder[];
@@ -12,6 +13,8 @@ interface ServiceOrdersViewProps {
   onDeleteOS: (id: string) => void;
   activeOSForCreation?: { customerId: string; title: string; type: string } | null;
   onClearActiveOSCreation?: () => void;
+  onAddCustomer?: (customer: Omit<Customer, 'id' | 'createdAt'>) => Customer;
+  onAddEquipment?: (eq: Omit<Equipment, 'id'>) => Equipment;
 }
 
 const CHECKLIST_LABELS: { [key in keyof OSChecklist]: string } = {
@@ -32,7 +35,9 @@ export default function ServiceOrdersView({
   onEditOS,
   onDeleteOS,
   activeOSForCreation,
-  onClearActiveOSCreation
+  onClearActiveOSCreation,
+  onAddCustomer,
+  onAddEquipment
 }: ServiceOrdersViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -64,6 +69,16 @@ export default function ServiceOrdersView({
   const [formPhotoUrl, setFormPhotoUrl] = useState('');
   const [formPhotoDescription, setFormPhotoDescription] = useState('');
 
+  // Custom Customer States
+  const [isCustomCustomer, setIsCustomCustomer] = useState<boolean>(false);
+  const [customCustomerName, setCustomCustomerName] = useState<string>('');
+  const [customCustomerPhone, setCustomCustomerPhone] = useState<string>('');
+  const [customEquipBrand, setCustomEquipBrand] = useState<string>('LG');
+  const [customEquipType, setCustomEquipType] = useState<string>('Split High Wall');
+  const [customEquipCapacity, setCustomEquipCapacity] = useState<number>(12000);
+  const [customEquipModel, setCustomEquipModel] = useState<string>('Inverter');
+  const [customEquipLocation, setCustomEquipLocation] = useState<string>('Sala');
+
   // Handle pre-fill from agenda if trigger exists
   React.useEffect(() => {
     if (activeOSForCreation) {
@@ -90,6 +105,9 @@ export default function ServiceOrdersView({
       setFormNotes('');
       setFormPhotoUrl('');
       setFormPhotoDescription('');
+      setIsCustomCustomer(false);
+      setCustomCustomerName('');
+      setCustomCustomerPhone('');
       setIsModalOpen(true);
       if (onClearActiveOSCreation) {
         onClearActiveOSCreation();
@@ -142,6 +160,14 @@ export default function ServiceOrdersView({
     setFormNotes('');
     setFormPhotoUrl('');
     setFormPhotoDescription('');
+    setIsCustomCustomer(false);
+    setCustomCustomerName('');
+    setCustomCustomerPhone('');
+    setCustomEquipBrand('LG');
+    setCustomEquipType('Split High Wall');
+    setCustomEquipCapacity(12000);
+    setCustomEquipModel('Inverter');
+    setCustomEquipLocation('Sala');
     setIsModalOpen(true);
   };
 
@@ -161,6 +187,9 @@ export default function ServiceOrdersView({
     setFormNotes(so.notes || '');
     setFormPhotoUrl(so.photoUrl || '');
     setFormPhotoDescription(so.photoDescription || '');
+    setIsCustomCustomer(false);
+    setCustomCustomerName('');
+    setCustomCustomerPhone('');
     setIsModalOpen(true);
   };
 
@@ -179,11 +208,62 @@ export default function ServiceOrdersView({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formCustomerId || !formEquipmentId || !formIssueReported) return;
+    if (!formIssueReported) return;
+
+    let finalCustomerId = formCustomerId;
+    let finalEquipmentId = formEquipmentId;
+
+    if (modalMode === 'add' && isCustomCustomer) {
+      if (!customCustomerName.trim()) {
+        alert('Por favor, informe o nome do cliente.');
+        return;
+      }
+      if (!onAddCustomer || !onAddEquipment) {
+        alert('Erro interno: funções de criação de cliente rápido indisponíveis.');
+        return;
+      }
+
+      // 1. Create customer on the fly
+      const newCust = onAddCustomer({
+        name: customCustomerName,
+        cpfCnpj: '',
+        email: `${customCustomerName.toLowerCase().replace(/\s+/g, '')}@example.com`,
+        phone: customCustomerPhone || '(00) 00000-0000',
+        address: {
+          street: 'Não informado',
+          number: 'S/N',
+          neighborhood: 'Não informado',
+          city: 'São Paulo',
+          state: 'SP',
+          cep: '01000-000'
+        },
+        notes: 'Cliente criado automaticamente pela Ordem de Serviço.'
+      });
+
+      // 2. Create equipment for this customer
+      const newEquip = onAddEquipment({
+        customerId: newCust.id,
+        brand: customEquipBrand as any,
+        type: customEquipType as any,
+        capacityBtu: customEquipCapacity,
+        model: customEquipModel,
+        serialNumber: `SN-${Date.now()}`,
+        locationRoom: customEquipLocation,
+        status: 'active'
+      });
+
+      finalCustomerId = newCust.id;
+      finalEquipmentId = newEquip.id;
+    } else {
+      if (!formCustomerId || !formEquipmentId) {
+        alert('Por favor, selecione o cliente solicitante e o aparelho correspondente.');
+        return;
+      }
+    }
 
     const osData = {
-      customerId: formCustomerId,
-      equipmentId: formEquipmentId,
+      customerId: finalCustomerId,
+      equipmentId: finalEquipmentId,
       status: formStatus,
       issueReported: formIssueReported,
       servicePerformed: formServicePerformed || undefined,
@@ -344,33 +424,85 @@ export default function ServiceOrdersView({
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm h-[700px] flex flex-col overflow-hidden">
                   
                   {/* Top Bar Actions */}
-                  <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between gap-3 sticky top-0 z-10">
-                    <div className="flex gap-2">
+                  <div className="p-4 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-10">
+                    <div className="flex flex-wrap items-center gap-2">
                       <button
                         id="btn-back-to-os-list"
                         onClick={() => setSelectedOS(null)}
-                        className="lg:hidden flex items-center text-blue-600 font-semibold text-sm mr-2"
+                        className="lg:hidden flex items-center text-blue-600 font-bold text-sm mr-2"
                       >
                         &larr; Lista
                       </button>
                       <button
                         id="btn-toggle-print"
                         onClick={() => setIsPrintPreview(!isPrintPreview)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${isPrintPreview ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${isPrintPreview ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}
                       >
                         <Printer size={14} />
-                        <span>{isPrintPreview ? 'Visualização Normal' : 'Modo Ficha Técnica'}</span>
+                        <span>{isPrintPreview ? 'Visualização Normal' : 'Ficha Técnica'}</span>
+                      </button>
+
+                      <button
+                        id="btn-download-pdf-direct"
+                        onClick={() => {
+                          try {
+                            const client = getCustomer(selectedOS.customerId);
+                            const equip = getEquipment(selectedOS.equipmentId);
+                            const doc = generateOSPDF(selectedOS, client, equip);
+                            doc.save(`Orçamento_${selectedOS.id}.pdf`);
+                          } catch (err) {
+                            console.error(err);
+                          }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold hover:bg-slate-50 transition"
+                      >
+                        <FileDown size={14} />
+                        <span>Baixar PDF</span>
                       </button>
                     </div>
 
-                    <button
-                      id={`btn-edit-os-${selectedOS.id}`}
-                      onClick={(e) => handleOpenEdit(selectedOS, e)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-medium hover:bg-slate-700 transition"
-                    >
-                      <Edit2 size={14} />
-                      <span>Editar OS</span>
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {(() => {
+                        const client = getCustomer(selectedOS.customerId);
+                        const { phone, text } = getWhatsAppShareText(selectedOS, client);
+                        let waUrl = `https://web.whatsapp.com/send?text=${text}`;
+                        if (phone) {
+                          waUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${text}`;
+                        }
+                        if (typeof navigator !== 'undefined' && /Android|iPhone|iPad/i.test(navigator.userAgent)) {
+                          waUrl = `https://api.whatsapp.com/send?${phone ? `phone=${phone}&` : ''}text=${text}`;
+                        }
+                        return (
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={() => {
+                              try {
+                                const equip = getEquipment(selectedOS.equipmentId);
+                                const doc = generateOSPDF(selectedOS, client, equip);
+                                doc.save(`Orçamento_${selectedOS.id}.pdf`);
+                              } catch (err) {
+                                console.error(err);
+                              }
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition shadow-sm cursor-pointer"
+                          >
+                            <Share2 size={14} />
+                            <span>Enviar por WhatsApp</span>
+                          </a>
+                        );
+                      })()}
+
+                      <button
+                        id={`btn-edit-os-${selectedOS.id}`}
+                        onClick={(e) => handleOpenEdit(selectedOS, e)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-semibold hover:bg-slate-700 transition"
+                      >
+                        <Edit2 size={14} />
+                        <span>Editar</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Sheet Body */}
@@ -737,43 +869,137 @@ export default function ServiceOrdersView({
 
               <form onSubmit={handleSubmit} className="p-5 space-y-6">
                 
-                {/* Customer and Equipment select */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Cliente Solicitante *</label>
-                    <select
-                      id="form-os-customer"
-                      required
-                      value={formCustomerId}
-                      onChange={(e) => handleCustomerChangeInForm(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm bg-white"
-                    >
-                      <option value="" disabled>Selecione um cliente...</option>
-                      {customers.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
+                {/* Mode toggle */}
+                {modalMode === 'add' && (
+                  <div className="flex items-center gap-2 pb-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <input
+                      type="checkbox"
+                      id="toggle-custom-customer"
+                      checked={isCustomCustomer}
+                      onChange={(e) => setIsCustomCustomer(e.target.checked)}
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 h-4 w-4"
+                    />
+                    <label htmlFor="toggle-custom-customer" className="text-xs font-bold text-slate-700 cursor-pointer select-none">
+                      Escrever nome personalizado (Cliente / Aparelho novo não cadastrado)
+                    </label>
                   </div>
+                )}
 
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Aparelho do Cliente *</label>
-                    <select
-                      id="form-os-equipment"
-                      required
-                      value={formEquipmentId}
-                      onChange={(e) => setFormEquipmentId(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm bg-white"
-                    >
-                      <option value="" disabled>Selecione um aparelho...</option>
-                      {activeCustomerEquips.map(eq => (
-                        <option key={eq.id} value={eq.id}>{eq.brand} {eq.model} ({eq.locationRoom})</option>
-                      ))}
-                    </select>
-                    {activeCustomerEquips.length === 0 && formCustomerId && (
-                      <p className="text-[10px] text-red-500 mt-1">Este cliente não possui nenhum equipamento cadastrado!</p>
-                    )}
+                {/* Customer and Equipment select */}
+                {isCustomCustomer && modalMode === 'add' ? (
+                  <div className="space-y-4 p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-blue-600">Cadastro Rápido de Cliente e Aparelho</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Nome do Cliente *</label>
+                        <input
+                          type="text"
+                          required
+                          value={customCustomerName}
+                          onChange={(e) => setCustomCustomerName(e.target.value)}
+                          placeholder="Ex: Fabrício, João, Matheus, Adriano..."
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Telefone / WhatsApp (Opcional)</label>
+                        <input
+                          type="text"
+                          value={customCustomerPhone}
+                          onChange={(e) => setCustomCustomerPhone(e.target.value)}
+                          placeholder="Ex: (11) 99999-9999"
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm font-mono bg-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Marca *</label>
+                        <select
+                          value={customEquipBrand}
+                          onChange={(e) => setCustomEquipBrand(e.target.value)}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs bg-white"
+                        >
+                          {['Daikin', 'Fujitsu', 'LG', 'Samsung', 'Carrier', 'Midea', 'Gree', 'Consul', 'Electrolux', 'Outra'].map(b => (
+                            <option key={b} value={b}>{b}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Tipo *</label>
+                        <select
+                          value={customEquipType}
+                          onChange={(e) => setCustomEquipType(e.target.value)}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs bg-white"
+                        >
+                          {['Split High Wall', 'Cassete', 'Piso Teto', 'Janela', 'Multi-Split', 'Chiller', 'Outro'].map(t => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">BTUs *</label>
+                        <input
+                          type="number"
+                          required
+                          value={customEquipCapacity}
+                          onChange={(e) => setCustomEquipCapacity(Number(e.target.value))}
+                          placeholder="Ex: 12000"
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs bg-white font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Local (Cômodo) *</label>
+                        <input
+                          type="text"
+                          required
+                          value={customEquipLocation}
+                          onChange={(e) => setCustomEquipLocation(e.target.value)}
+                          placeholder="Ex: Sala, Quarto, Cozinha..."
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs bg-white"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Cliente Solicitante *</label>
+                      <select
+                        id="form-os-customer"
+                        required={!isCustomCustomer}
+                        value={formCustomerId}
+                        onChange={(e) => handleCustomerChangeInForm(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm bg-white"
+                      >
+                        <option value="" disabled>Selecione um cliente...</option>
+                        {customers.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Aparelho do Cliente *</label>
+                      <select
+                        id="form-os-equipment"
+                        required={!isCustomCustomer}
+                        value={formEquipmentId}
+                        onChange={(e) => setFormEquipmentId(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm bg-white"
+                      >
+                        <option value="" disabled>Selecione um aparelho...</option>
+                        {activeCustomerEquips.map(eq => (
+                          <option key={eq.id} value={eq.id}>{eq.brand} {eq.model} ({eq.locationRoom})</option>
+                        ))}
+                      </select>
+                      {activeCustomerEquips.length === 0 && formCustomerId && (
+                        <p className="text-[10px] text-red-500 mt-1">Este cliente não possui nenhum equipamento cadastrado!</p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Status & Payment Status */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1012,7 +1238,7 @@ export default function ServiceOrdersView({
                   <button
                     id="btn-save-os"
                     type="submit"
-                    disabled={activeCustomerEquips.length === 0}
+                    disabled={modalMode === 'add' ? (!isCustomCustomer && activeCustomerEquips.length === 0) : false}
                     className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg text-sm hover:bg-blue-700 transition shadow-sm disabled:opacity-50"
                   >
                     Gerar / Salvar O.S.
