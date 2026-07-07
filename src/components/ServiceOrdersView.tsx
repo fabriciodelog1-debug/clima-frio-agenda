@@ -79,6 +79,11 @@ export default function ServiceOrdersView({
   const [customEquipModel, setCustomEquipModel] = useState<string>('Inverter');
   const [customEquipLocation, setCustomEquipLocation] = useState<string>('Sala');
 
+  // WhatsApp Guidance Modal States
+  const [isWhatsAppGuideOpen, setIsWhatsAppGuideOpen] = useState<boolean>(false);
+  const [whatsAppGuideUrl, setWhatsAppGuideUrl] = useState<string>('');
+  const [whatsAppGuideFileName, setWhatsAppGuideFileName] = useState<string>('');
+
   // Handle pre-fill from agenda if trigger exists
   React.useEffect(() => {
     if (activeOSForCreation) {
@@ -472,16 +477,19 @@ export default function ServiceOrdersView({
                         if (typeof navigator !== 'undefined' && /Android|iPhone|iPad/i.test(navigator.userAgent)) {
                           waUrl = `https://api.whatsapp.com/send?${phone ? `phone=${phone}&` : ''}text=${text}`;
                         }
+                        const fileName = `Orçamento_${selectedOS.id}.pdf`;
+
                         return (
-                          <a
-                            href={waUrl}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button
+                            id="btn-trigger-whatsapp-flow"
                             onClick={() => {
                               try {
                                 const equip = getEquipment(selectedOS.equipmentId);
                                 const doc = generateOSPDF(selectedOS, client, equip);
-                                doc.save(`Orçamento_${selectedOS.id}.pdf`);
+                                doc.save(fileName);
+                                setWhatsAppGuideUrl(waUrl);
+                                setWhatsAppGuideFileName(fileName);
+                                setIsWhatsAppGuideOpen(true);
                               } catch (err) {
                                 console.error(err);
                               }
@@ -490,7 +498,7 @@ export default function ServiceOrdersView({
                           >
                             <Share2 size={14} />
                             <span>Enviar por WhatsApp</span>
-                          </a>
+                          </button>
                         );
                       })()}
 
@@ -1245,6 +1253,88 @@ export default function ServiceOrdersView({
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+
+        {isWhatsAppGuideOpen && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden border border-slate-100"
+            >
+              <div className="bg-emerald-600 px-5 py-4 flex items-center justify-between text-white">
+                <div className="flex items-center gap-2">
+                  <Share2 size={20} />
+                  <h3 className="font-bold text-base">Enviar por WhatsApp</h3>
+                </div>
+                <button
+                  onClick={() => setIsWhatsAppGuideOpen(false)}
+                  className="text-white/80 hover:text-white transition"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div className="p-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-100 flex items-center gap-2.5 text-xs">
+                  <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold shrink-0">✓</div>
+                  <div>
+                    <p className="font-bold">PDF baixado com sucesso!</p>
+                    <p className="text-[11px] text-emerald-700/90 font-mono">Arquivo: {whatsAppGuideFileName}</p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Devido às limitações de segurança dos navegadores e do próprio WhatsApp, não é possível anexar arquivos automaticamente através de links externos.
+                </p>
+
+                <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Como enviar para o cliente:</span>
+                  
+                  <div className="flex gap-3 items-start">
+                    <span className="w-5 h-5 bg-blue-100 text-blue-700 font-bold text-xs rounded-full flex items-center justify-center shrink-0 mt-0.5">1</span>
+                    <p className="text-xs text-slate-600 font-medium">
+                      Clique no botão verde abaixo para <strong>Abrir o WhatsApp</strong> (a conversa com o cliente será iniciada com o texto preenchido).
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3 items-start">
+                    <span className="w-5 h-5 bg-blue-100 text-blue-700 font-bold text-xs rounded-full flex items-center justify-center shrink-0 mt-0.5">2</span>
+                    <p className="text-xs text-slate-600 font-medium">
+                      No WhatsApp, clique no botão de <strong>Anexo (ícone de clipe 📎 ou +)</strong>.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3 items-start">
+                    <span className="w-5 h-5 bg-blue-100 text-blue-700 font-bold text-xs rounded-full flex items-center justify-center shrink-0 mt-0.5">3</span>
+                    <p className="text-xs text-slate-600 font-medium">
+                      Selecione o arquivo PDF de orçamento que acabou de ser baixado e envie!
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 pt-2">
+                  <a
+                    href={whatsAppGuideUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => setIsWhatsAppGuideOpen(false)}
+                    className="w-full py-2.5 bg-emerald-600 text-white font-bold text-sm text-center rounded-lg hover:bg-emerald-700 transition shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Share2 size={16} />
+                    <span>Abrir Conversa no WhatsApp</span>
+                  </a>
+                  <button
+                    onClick={() => setIsWhatsAppGuideOpen(false)}
+                    className="w-full py-2 border border-slate-200 text-slate-600 font-bold text-xs text-center rounded-lg hover:bg-slate-50 transition"
+                  >
+                    Fechar Instruções
+                  </button>
+                </div>
+              </div>
             </motion.div>
           </div>
         )}
