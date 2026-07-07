@@ -36,6 +36,20 @@ export default function DashboardView({
   const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((a, b) => a + b.amount, 0);
   const balance = totalIncomes - totalExpenses;
 
+  // Filter service orders that have scheduled preventive maintenance
+  const maintenanceReminders = serviceOrders
+    .filter(os => os.nextMaintenanceDate)
+    .map(os => {
+      const client = customers.find(c => c.id === os.customerId);
+      const equip = equipment.find(e => e.id === os.equipmentId);
+      return {
+        os,
+        client,
+        equip,
+      };
+    })
+    .sort((a, b) => new Date(a.os.nextMaintenanceDate!).getTime() - new Date(b.os.nextMaintenanceDate!).getTime());
+
   const handleStartAppointment = (appt: Appointment) => {
     onEditAppointment({
       ...appt,
@@ -248,6 +262,101 @@ export default function DashboardView({
           </div>
         </div>
 
+      </div>
+
+      {/* Central de Pós-Venda e Lembretes de Preventiva */}
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4" id="pos-venda-panel">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+              <span className="p-1.5 bg-blue-50 text-blue-600 rounded-lg shrink-0">
+                <Clock size={18} />
+              </span>
+              Central de Pós-Venda & Preventivas (WhatsApp)
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Monitore o período recomendado de higienização do ar condicionado e envie mensagens de lembrete com um clique.
+            </p>
+          </div>
+          <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full self-start sm:self-center font-mono">
+            {maintenanceReminders.length} Planejados
+          </span>
+        </div>
+
+        {maintenanceReminders.length === 0 ? (
+          <div className="py-8 text-center text-slate-400 text-xs border border-dashed border-slate-100 rounded-2xl bg-slate-50/50">
+            Nenhuma manutenção preventiva agendada para o pós-venda. Cadastre um planejamento ao finalizar/criar uma O.S.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {maintenanceReminders.map(({ os, client, equip }) => {
+              if (!os.nextMaintenanceDate) return null;
+              const dateObj = new Date(os.nextMaintenanceDate + 'T12:00:00');
+              const isOverdue = dateObj < new Date();
+              const formattedDate = dateObj.toLocaleDateString('pt-BR');
+
+              return (
+                <div 
+                  key={os.id} 
+                  className={`p-4 rounded-2xl border transition duration-150 flex flex-col justify-between gap-4 ${isOverdue ? 'bg-amber-50/30 border-amber-100 hover:border-amber-300' : 'bg-slate-50/50 border-slate-100 hover:border-slate-300'}`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${isOverdue ? 'bg-amber-100 text-amber-800' : 'bg-blue-100/60 text-blue-800'}`}>
+                        {isOverdue ? '⚠️ RECOMENDADO / VENCIDO' : '📅 EM BREVE'}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono font-bold">OS Ref: {os.id}</span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-slate-800 text-sm truncate">{client?.name || 'Cliente Geral'}</h4>
+                      <p className="text-xs text-slate-500 font-medium">Aparelho: <span className="font-semibold text-slate-700">{equip ? `${equip.brand} ${equip.model}` : 'Split'}</span></p>
+                      <p className="text-xs text-slate-500 font-medium">Ambiente: <span className="text-slate-700 font-semibold">{equip?.locationRoom || 'Sala'}</span></p>
+                    </div>
+
+                    <div className="pt-2 flex items-center gap-1.5 text-xs">
+                      <span className="text-slate-400 font-medium">Próxima Visita:</span>
+                      <strong className={`font-bold ${isOverdue ? 'text-amber-700' : 'text-blue-800'}`}>
+                        {formattedDate}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-2">
+                    <span className="text-[10px] text-slate-400 font-mono block">
+                      {client?.phone || 'Sem telefone'}
+                    </span>
+
+                    <button
+                      onClick={() => {
+                        const message = `Olá ${client?.name || 'Cliente'}, aqui é o técnico da Clima Frio! ❄️
+
+Espero que esteja tudo bem! Passando para avisar que está no período recomendado de *Manutenção Preventiva e Higienização* do seu ar condicionado *${equip?.brand || ''} ${equip?.model || 'Inverter'}* da *${equip?.locationRoom || 'Sala'}*.
+
+Já se passaram cerca de *${os.nextMaintenanceMonths || 6} meses* da última limpeza. Manter o aparelho limpo garante ar saudável para sua família, evita barulhos/vazamentos e economiza até 30% de energia elétrica! 🔋
+
+Podemos agendar uma visita técnica de limpeza rápida para esta semana? Quais dias ficam melhores para você?`;
+                        const encodedMessage = encodeURIComponent(message);
+                        const cleanPhone = client?.phone ? client.phone.replace(/\D/g, '') : '';
+                        let waUrl = `https://web.whatsapp.com/send?text=${encodedMessage}`;
+                        if (cleanPhone) {
+                          waUrl = `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`;
+                        }
+                        if (typeof navigator !== 'undefined' && /Android|iPhone|iPad/i.test(navigator.userAgent)) {
+                          waUrl = `https://api.whatsapp.com/send?${cleanPhone ? `phone=${cleanPhone}&` : ''}text=${encodedMessage}`;
+                        }
+                        window.open(waUrl, '_blank');
+                      }}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 shadow-xs"
+                    >
+                      <span className="shrink-0 font-semibold">Lembrar Cliente</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

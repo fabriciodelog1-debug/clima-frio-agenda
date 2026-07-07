@@ -83,6 +83,8 @@ export interface ServiceOrder {
   notes?: string;
   photoUrl?: string;
   photoDescription?: string;
+  nextMaintenanceMonths?: number; // e.g. 3 or 6 months
+  nextMaintenanceDate?: string; // YYYY-MM-DD
 }
 
 export interface Transaction {

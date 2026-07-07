@@ -56,6 +56,7 @@ export default function ServiceOrdersView({
   const [formLaborValue, setFormLaborValue] = useState<number>(0);
   const [formPartsValue, setFormPartsValue] = useState<number>(0);
   const [formPaymentStatus, setFormPaymentStatus] = useState<'pending' | 'paid'>('pending');
+  const [formNextMaintenanceMonths, setFormNextMaintenanceMonths] = useState<number>(0);
   const [formChecklist, setFormChecklist] = useState<OSChecklist>({
     cleanEvaporator: false,
     cleanCondenser: false,
@@ -153,6 +154,7 @@ export default function ServiceOrdersView({
     setFormLaborValue(0);
     setFormPartsValue(0);
     setFormPaymentStatus('pending');
+    setFormNextMaintenanceMonths(0);
     setFormChecklist({
       cleanEvaporator: false,
       cleanCondenser: false,
@@ -188,6 +190,7 @@ export default function ServiceOrdersView({
     setFormLaborValue(so.laborValue);
     setFormPartsValue(so.partsValue);
     setFormPaymentStatus(so.paymentStatus);
+    setFormNextMaintenanceMonths(so.nextMaintenanceMonths || 0);
     setFormChecklist(so.checklist);
     setFormNotes(so.notes || '');
     setFormPhotoUrl(so.photoUrl || '');
@@ -266,6 +269,13 @@ export default function ServiceOrdersView({
       }
     }
 
+    let nextMaintenanceDate: string | undefined = undefined;
+    if (formNextMaintenanceMonths > 0) {
+      const d = new Date();
+      d.setMonth(d.getMonth() + Number(formNextMaintenanceMonths));
+      nextMaintenanceDate = d.toISOString().split('T')[0];
+    }
+
     const osData = {
       customerId: finalCustomerId,
       equipmentId: finalEquipmentId,
@@ -281,7 +291,9 @@ export default function ServiceOrdersView({
       dateClosed: formStatus === 'completed' ? new Date().toISOString().split('T')[0] : undefined,
       notes: formNotes || undefined,
       photoUrl: formPhotoUrl || undefined,
-      photoDescription: formPhotoDescription || undefined
+      photoDescription: formPhotoDescription || undefined,
+      nextMaintenanceMonths: formNextMaintenanceMonths > 0 ? formNextMaintenanceMonths : undefined,
+      nextMaintenanceDate: nextMaintenanceDate
     };
 
     if (modalMode === 'add') {
@@ -835,6 +847,55 @@ export default function ServiceOrdersView({
                           </div>
                         </div>
 
+                        {/* Próxima Preventiva / Pós-Venda Panel */}
+                        {selectedOS.nextMaintenanceDate && (
+                          <div className="p-4 border border-blue-100 bg-blue-50/30 rounded-xl space-y-2 mt-4">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-blue-800 flex items-center gap-1.5">
+                              <Calendar size={14} />
+                              Próxima Manutenção Preventiva (Pós-Venda)
+                            </h4>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
+                              <div>
+                                <p className="text-slate-700 font-medium">
+                                  Próxima higienização recomendada:{' '}
+                                  <strong className="text-blue-800 font-bold">
+                                    {new Date(selectedOS.nextMaintenanceDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+                                  </strong>{' '}
+                                  (em {selectedOS.nextMaintenanceMonths} meses)
+                                </p>
+                                <p className="text-[11px] text-slate-500 leading-tight">
+                                  Mantém o ambiente saudável, evita vazamentos e reduz o consumo elétrico do ar condicionado.
+                                </p>
+                              </div>
+
+                              <button
+                                onClick={() => {
+                                  const text = `Olá ${client?.name || 'Cliente'}, aqui é da Clima Frio! ❄️
+
+Passando para lembrar que já está se aproximando o período recomendado (${selectedOS.nextMaintenanceMonths} meses) para a *Manutenção Preventiva e Higienização* do seu aparelho de ar condicionado [${equip?.brand || ''} ${equip?.model || ''}] localizado na *${equip?.locationRoom || 'Sala'}*.
+
+Manter a limpeza em dia garante o bom funcionamento, evita quebras repentinas e economiza energia elétrica! 🔋
+
+Gostaria de agendar uma visita para esta semana? Estamos com horários disponíveis.`;
+                                  const encodedText = encodeURIComponent(text);
+                                  const phone = client?.phone ? client.phone.replace(/\D/g, '') : '';
+                                  let waUrl = `https://web.whatsapp.com/send?text=${encodedText}`;
+                                  if (phone) {
+                                    waUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${encodedText}`;
+                                  }
+                                  if (typeof navigator !== 'undefined' && /Android|iPhone|iPad/i.test(navigator.userAgent)) {
+                                    waUrl = `https://api.whatsapp.com/send?${phone ? `phone=${phone}&` : ''}text=${encodedText}`;
+                                  }
+                                  window.open(waUrl, '_blank');
+                                }}
+                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition shrink-0 flex items-center gap-1.5 shadow-xs"
+                              >
+                                <span>Lembrar Cliente WhatsApp</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
                       </div>
                     )}
                   </div>
@@ -1039,6 +1100,38 @@ export default function ServiceOrdersView({
                       <option value="paid" className="text-green-600">Pago / Caixa</option>
                     </select>
                   </div>
+                </div>
+
+                {/* Próxima Manutenção Preventiva */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Planejar Próxima Preventiva (Pós-Venda)</label>
+                    <select
+                      id="form-os-next-maintenance"
+                      value={formNextMaintenanceMonths}
+                      onChange={(e) => setFormNextMaintenanceMonths(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm bg-white font-medium text-slate-700"
+                    >
+                      <option value={0}>Nenhum lembrete planejado</option>
+                      <option value={3}>Em 3 meses (Recomendado comercial/frequente)</option>
+                      <option value={6}>Em 6 meses (Padrão residencial)</option>
+                      <option value={12}>Em 1 ano</option>
+                    </select>
+                  </div>
+                  {formNextMaintenanceMonths > 0 && (
+                    <div className="flex items-end pb-0.5 text-xs text-slate-500">
+                      <span className="bg-blue-50 text-blue-800 px-3 py-1.5 rounded-lg border border-blue-100 flex items-center gap-1.5 font-medium">
+                        <span>📅 Lembrete para:</span>
+                        <strong className="font-bold">
+                          {(() => {
+                            const d = new Date();
+                            d.setMonth(d.getMonth() + formNextMaintenanceMonths);
+                            return d.toLocaleDateString('pt-BR');
+                          })()}
+                        </strong>
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Issue and Service Performed */}
