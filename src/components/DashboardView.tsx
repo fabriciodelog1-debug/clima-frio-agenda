@@ -26,6 +26,9 @@ export default function DashboardView({
   setSelectedOSForSheet
 }: DashboardViewProps) {
   
+  const companyProfileStored = typeof window !== 'undefined' ? localStorage.getItem('climafrio_company_profile') : null;
+  const companyProfile = companyProfileStored ? JSON.parse(companyProfileStored) : null;
+
   const activeOSList = serviceOrders.filter(os => os.status === 'in_progress');
   const upcomingAppts = appointments
     .filter(a => a.status === 'scheduled')
@@ -75,7 +78,7 @@ export default function DashboardView({
           <Cpu size={250} />
         </div>
         <div className="relative z-10 max-w-xl space-y-2">
-          <span className="text-xs font-bold uppercase tracking-widest text-blue-100 bg-blue-800/30 px-3 py-1 rounded-full">Painel Central Clima Frio</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-blue-100 bg-blue-800/30 px-3 py-1 rounded-full">Painel Central {companyProfile?.name || 'Clima Frio'}</span>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Painel de Operações</h1>
           <p className="text-xs sm:text-sm text-blue-100 leading-relaxed font-medium">
             Gerenciamento completo de serviços, visitas e finanças para prestadores e técnicos de climatização.
@@ -329,7 +332,7 @@ export default function DashboardView({
 
                     <button
                       onClick={() => {
-                        const message = `Olá ${client?.name || 'Cliente'}, aqui é o técnico da Clima Frio! ❄️
+                        const message = `Olá ${client?.name || 'Cliente'}, aqui é o técnico da ${companyProfile?.name || 'Clima Frio'}! ❄️
 
 Espero que esteja tudo bem! Passando para avisar que está no período recomendado de *Manutenção Preventiva e Higienização* do seu ar condicionado *${equip?.brand || ''} ${equip?.model || 'Inverter'}* da *${equip?.locationRoom || 'Sala'}*.
 

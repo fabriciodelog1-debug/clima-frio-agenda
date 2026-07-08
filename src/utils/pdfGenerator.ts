@@ -49,32 +49,84 @@ export function generateOSPDF(selectedOS: ServiceOrder, client: Customer | undef
     return y + 4;
   };
 
+  // Load company profile from localStorage
+  let company: any = null;
+  try {
+    const stored = localStorage.getItem('climafrio_company_profile');
+    if (stored) {
+      company = JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error('Error loading company profile', e);
+  }
+
+  const compName = company?.name || 'CLIMA FRIO';
+  const compSlogan = company?.slogan || 'Sistemas de Climatização & Refrigeração';
+  const compCNPJ = company?.cnpj ? `CNPJ: ${company.cnpj}` : '';
+  const compPhone = company?.phone || '(11) 98765-4321';
+  const compEmail = company?.email || 'contato@climafrio.com';
+
+  let compAddressLine = '';
+  if (company?.address) {
+    const addr = company.address;
+    compAddressLine = `${addr.street || ''}, ${addr.number || ''} ${addr.complement ? `- ${addr.complement}` : ''} - ${addr.neighborhood || ''}, ${addr.city || ''}/${addr.state || ''}`;
+  } else {
+    compAddressLine = 'Suporte Técnico Especializado de Ar Condicionado';
+  }
+
   // --- HEADER SECTION ---
-  doc.setFillColor(colorLightBg[0], colorLightBg[1], colorLightBg[2]);
-  doc.rect(marginX, currentY, contentWidth, 24, 'F');
-  doc.setDrawColor(colorPrimary[0], colorPrimary[1], colorPrimary[2]);
-  doc.setLineWidth(1);
-  doc.line(marginX, currentY, marginX, currentY + 24); // Left blue border accent
+  if (company?.bannerUrl) {
+    try {
+      // Draw custom company banner on the left (125mm wide, 24mm high)
+      doc.addImage(company.bannerUrl, 'JPEG', marginX, currentY, 125, 24);
+    } catch (err) {
+      console.error("Error drawing banner image in PDF", err);
+      // Fallback
+      doc.setFillColor(colorLightBg[0], colorLightBg[1], colorLightBg[2]);
+      doc.rect(marginX, currentY, 125, 24, 'F');
+      doc.setDrawColor(colorPrimary[0], colorPrimary[1], colorPrimary[2]);
+      doc.setLineWidth(1);
+      doc.line(marginX, currentY, marginX, currentY + 24);
 
-  // Company details
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.setTextColor(colorSecondary[0], colorSecondary[1], colorSecondary[2]);
-  doc.text('CLIMA FRIO', marginX + 4, currentY + 7);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(colorSecondary[0], colorSecondary[1], colorSecondary[2]);
+      doc.text(compName.toUpperCase(), marginX + 4, currentY + 7);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(colorTextMuted[0], colorTextMuted[1], colorTextMuted[2]);
-  doc.text('Sistemas de Climatização & Refrigeração', marginX + 4, currentY + 11);
-  doc.text('E-mail: contato@climafrio.com  |  Tel: (11) 98765-4321', marginX + 4, currentY + 15);
-  doc.text('Suporte Técnico Especializado de Ar Condicionado', marginX + 4, currentY + 19);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(colorTextMuted[0], colorTextMuted[1], colorTextMuted[2]);
+      doc.text(compSlogan, marginX + 4, currentY + 12);
+      doc.text(`E-mail: ${compEmail} | Tel: ${compPhone}`, marginX + 4, currentY + 16);
+      doc.text(compCNPJ ? `${compCNPJ} | ${compAddressLine}` : compAddressLine, marginX + 4, currentY + 20);
+    }
+  } else {
+    doc.setFillColor(colorLightBg[0], colorLightBg[1], colorLightBg[2]);
+    doc.rect(marginX, currentY, 125, 24, 'F');
+    doc.setDrawColor(colorPrimary[0], colorPrimary[1], colorPrimary[2]);
+    doc.setLineWidth(1);
+    doc.line(marginX, currentY, marginX, currentY + 24); // Left blue border accent
 
-  // OS Info Box on top right
+    // Company details
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(colorSecondary[0], colorSecondary[1], colorSecondary[2]);
+    doc.text(compName.toUpperCase(), marginX + 4, currentY + 7);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(colorTextMuted[0], colorTextMuted[1], colorTextMuted[2]);
+    doc.text(compSlogan, marginX + 4, currentY + 12);
+    doc.text(`E-mail: ${compEmail}  |  Tel: ${compPhone}`, marginX + 4, currentY + 16);
+    doc.text(compCNPJ ? `${compCNPJ} | ${compAddressLine}` : compAddressLine, marginX + 4, currentY + 20);
+  }
+
+  // OS Info Box on top right (Always standard right aligned, 50mm wide)
   doc.setFillColor(241, 245, 249); // light blue-gray
-  doc.rect(145, currentY + 2, 50, 20, 'F');
+  doc.rect(145, currentY, 50, 24, 'F');
   doc.setDrawColor(203, 213, 225);
   doc.setLineWidth(0.2);
-  doc.rect(145, currentY + 2, 50, 20, 'S');
+  doc.rect(145, currentY, 50, 24, 'S');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
@@ -87,8 +139,8 @@ export function generateOSPDF(selectedOS: ServiceOrder, client: Customer | undef
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(colorTextDark[0], colorTextDark[1], colorTextDark[2]);
-  doc.text(`Data: ${new Date(selectedOS.dateOpened + 'T12:00:00').toLocaleDateString('pt-BR')}`, 148, currentY + 16);
-  doc.text(`Status: ${selectedOS.status.toUpperCase()}`, 148, currentY + 19);
+  doc.text(`Data: ${new Date(selectedOS.dateOpened + 'T12:00:00').toLocaleDateString('pt-BR')}`, 148, currentY + 17);
+  doc.text(`Status: ${selectedOS.status.toUpperCase()}`, 148, currentY + 21);
 
   currentY += 30;
 
@@ -323,7 +375,7 @@ export function generateOSPDF(selectedOS: ServiceOrder, client: Customer | undef
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(colorTextMuted[0], colorTextMuted[1], colorTextMuted[2]);
-  doc.text('Este documento oficial de atendimento Clima Frio serve como comprovante de prestação de serviços de refrigeração e climatização.', marginX, currentY);
+  doc.text(`Este documento oficial de atendimento ${compName} serve como comprovante de prestação de serviços de refrigeração e climatização.`, marginX, currentY);
   doc.text('Garantia legal de 90 dias para mão de obra e peças aplicadas a contar da data de conclusão do chamado técnico.', marginX, currentY + 3);
 
   currentY += 15;
@@ -337,7 +389,7 @@ export function generateOSPDF(selectedOS: ServiceOrder, client: Customer | undef
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(colorTextDark[0], colorTextDark[1], colorTextDark[2]);
-  doc.text('CLIMA FRIO SERVICE & TECH', marginX + 22, currentY + 4);
+  doc.text(`${compName.toUpperCase()} SERVICE & TECH`, marginX + 22, currentY + 4);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.text('Assinatura do Técnico Responsável', marginX + 18, currentY + 7.5);
@@ -365,7 +417,16 @@ export function getWhatsAppShareText(selectedOS: ServiceOrder, client: Customer 
   const total = selectedOS.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const statusLabel = selectedOS.paymentStatus === 'paid' ? 'Pago (Confirmado)' : 'Pendente de aprovação / pagamento';
   
-  const text = `Olá ${clientName}, segue o orçamento / ordem de serviço de manutenção Clima Frio referente ao seu equipamento.
+  let compName = 'Clima Frio';
+  try {
+    const stored = localStorage.getItem('climafrio_company_profile');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed.name) compName = parsed.name;
+    }
+  } catch (e) {}
+
+  const text = `Olá ${clientName}, segue o orçamento / ordem de serviço de manutenção ${compName} referente ao seu equipamento.
 
 📋 *Código do Documento:* ${osNum}
 💰 *Valor Total:* ${total}

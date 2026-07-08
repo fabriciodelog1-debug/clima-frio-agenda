@@ -46,6 +46,9 @@ export default function ServiceOrdersView({
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [isPrintPreview, setIsPrintPreview] = useState(false);
 
+  const companyProfileStored = typeof window !== 'undefined' ? localStorage.getItem('climafrio_company_profile') : null;
+  const companyProfile = companyProfileStored ? JSON.parse(companyProfileStored) : null;
+
   // Form States
   const [formId, setFormId] = useState('');
   const [formCustomerId, setFormCustomerId] = useState('');
@@ -531,13 +534,33 @@ export default function ServiceOrdersView({
                       /* High-fidelity Technical Sheet / Printable Layout */
                       <div className="border border-slate-300 p-8 rounded-lg bg-white space-y-6 font-sans text-slate-800 max-w-3xl mx-auto" id="os-print-preview-sheet">
                         {/* Company Logo and Header */}
-                        <div className="flex justify-between items-start border-b-2 border-slate-800 pb-5">
-                          <div>
-                            <h2 className="text-xl font-black uppercase tracking-wider text-slate-800">CLIMA FRIO</h2>
-                            <p className="text-xs text-slate-500 mt-1">Sistemas de Climatização & Refrigeração</p>
-                            <p className="text-[10px] text-slate-400">Suporte Técnico: contato@climafrio.com • (11) 98765-4321</p>
-                          </div>
-                          <div className="text-right">
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b-2 border-slate-800 pb-5">
+                          {companyProfile?.bannerUrl ? (
+                            <div className="max-w-md w-full sm:w-2/3">
+                              <img
+                                src={companyProfile.bannerUrl}
+                                alt="Banner da Oficina"
+                                className="w-full h-auto max-h-16 object-contain object-left rounded-lg"
+                                referrerPolicy="no-referrer"
+                              />
+                            </div>
+                          ) : (
+                            <div>
+                              <h2 className="text-xl font-black uppercase tracking-wider text-slate-800">
+                                {companyProfile?.name || 'CLIMA FRIO'}
+                              </h2>
+                              <p className="text-xs text-slate-500 mt-1">
+                                {companyProfile?.slogan || 'Sistemas de Climatização & Refrigeração'}
+                              </p>
+                              <p className="text-[10px] text-slate-400">
+                                Suporte Técnico: {companyProfile?.email || 'contato@climafrio.com'} • {companyProfile?.phone || '(11) 98765-4321'}
+                              </p>
+                              {companyProfile?.cnpj && (
+                                <p className="text-[9px] text-slate-500 font-mono mt-0.5">CNPJ: {companyProfile.cnpj}</p>
+                              )}
+                            </div>
+                          )}
+                          <div className="text-right shrink-0">
                             <h3 className="font-mono text-base font-black bg-slate-100 px-3 py-1.5 rounded border border-slate-200">OS N° {selectedOS.id}</h3>
                             <p className="text-xs text-slate-500 mt-2 font-mono">Aberta em: {new Date(selectedOS.dateOpened + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
                             {selectedOS.dateClosed && (
@@ -676,7 +699,7 @@ export default function ServiceOrdersView({
                         <div className="grid grid-cols-2 gap-12 pt-8 text-center text-[10px] text-slate-400">
                           <div className="border-t border-slate-300 pt-2">
                             <p>ASSINATURA DO TÉCNICO RESPONSÁVEL</p>
-                            <p className="font-bold text-slate-600 mt-1">CLIMA FRIO SERVICE</p>
+                            <p className="font-bold text-slate-600 mt-1">{(companyProfile?.name || 'CLIMA FRIO').toUpperCase()} SERVICE</p>
                           </div>
                           <div className="border-t border-slate-300 pt-2">
                             <p>ASSINATURA DO CLIENTE (DE ACORDO)</p>
@@ -870,7 +893,7 @@ export default function ServiceOrdersView({
 
                               <button
                                 onClick={() => {
-                                  const text = `Olá ${client?.name || 'Cliente'}, aqui é da Clima Frio! ❄️
+                                  const text = `Olá ${client?.name || 'Cliente'}, aqui é da ${companyProfile?.name || 'Clima Frio'}! ❄️
 
 Passando para lembrar que já está se aproximando o período recomendado (${selectedOS.nextMaintenanceMonths} meses) para a *Manutenção Preventiva e Higienização* do seu aparelho de ar condicionado [${equip?.brand || ''} ${equip?.model || ''}] localizado na *${equip?.locationRoom || 'Sala'}*.
 

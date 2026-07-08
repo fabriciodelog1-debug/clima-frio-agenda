@@ -96,3 +96,22 @@ export interface Transaction {
   description: string;
   linkedOsId?: string;
 }
+
+export interface CompanyProfile {
+  name: string;
+  cnpj: string;
+  phone: string;
+  email: string;
+  slogan: string;
+  address: {
+    street: string;
+    number: string;
+    complement?: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    cep: string;
+  };
+  bannerUrl?: string;
+}
+

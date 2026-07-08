@@ -9,7 +9,7 @@ import {
 } from './initialData';
 
 // Icons
-import { LayoutDashboard, Users, Cpu, Calendar, FileText, Landmark, Menu, X, Snowflake } from 'lucide-react';
+import { LayoutDashboard, Users, Cpu, Calendar, FileText, Landmark, Menu, X, Snowflake, Building } from 'lucide-react';
 
 // Views
 import DashboardView from './components/DashboardView';
@@ -18,6 +18,7 @@ import EquipmentView from './components/EquipmentView';
 import ScheduleView from './components/ScheduleView';
 import ServiceOrdersView from './components/ServiceOrdersView';
 import FinancialView from './components/FinancialView';
+import CompanyProfileView from './components/CompanyProfileView';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('Dashboard');
@@ -235,7 +236,8 @@ export default function App() {
     { name: 'Equipamentos', icon: Cpu },
     { name: 'Agenda', icon: Calendar },
     { name: 'Ordem de Serviço', icon: FileText },
-    { name: 'Financeiro', icon: Landmark }
+    { name: 'Financeiro', icon: Landmark },
+    { name: 'Minha Empresa', icon: Building }
   ];
 
   // Cashier balance calculator for sidebar footer
@@ -402,6 +404,10 @@ export default function App() {
               onAddTransaction={handleAddTransaction}
               onDeleteTransaction={handleDeleteTransaction}
             />
+          )}
+
+          {activeTab === 'Minha Empresa' && (
+            <CompanyProfileView />
           )}
         </div>
       </main>
