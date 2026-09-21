@@ -1,6 +1,6 @@
 import React from 'react';
 import { Customer, Equipment, Appointment, ServiceOrder, Transaction } from '../types';
-import { Users, Cpu, Calendar, FileText, CheckCircle2, Clock, AlertCircle, ChevronRight, TrendingUp } from 'lucide-react';
+import { Users, Cpu, Calendar, FileText, CheckCircle2, Clock, AlertCircle, ChevronRight, TrendingUp, ShieldCheck, Award } from 'lucide-react';
 
 interface DashboardViewProps {
   customers: Customer[];
@@ -142,6 +142,41 @@ export default function DashboardView({
           <div className="p-2.5 bg-green-50 text-green-600 rounded-xl shrink-0">
             <TrendingUp size={18} />
           </div>
+        </div>
+      </div>
+
+      {/* PMOC & Technical Responsibility Access Spotlight */}
+      <div 
+        onClick={() => setActiveTab('PMOC / ART')}
+        className="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 shadow-xs hover:shadow-md transition duration-150 cursor-pointer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-blue-500/20 text-blue-300 border border-blue-400/30 rounded-xl shrink-0">
+            <ShieldCheck size={26} />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">
+                Lei Federal 13.589/18
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">
+                ART / TRT Mecânica
+              </span>
+            </div>
+            <h3 className="font-extrabold text-sm sm:text-base text-white tracking-tight">
+              Acesso PMOC & Responsabilidade Técnica
+            </h3>
+            <p className="text-xs text-slate-300">
+              Acompanhamento de rotinas periódicas de manutenção, controle de qualidade do ar e termo formal de responsabilidade técnica (ART/TRT).
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+          <span className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs">
+            <span>Acessar Módulo PMOC</span>
+            <ChevronRight size={14} />
+          </span>
         </div>
       </div>
 

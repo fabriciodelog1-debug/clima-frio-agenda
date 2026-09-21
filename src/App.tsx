@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Customer, Equipment, Appointment, ServiceOrder, Transaction } from './types';
+import { Customer, Equipment, Appointment, ServiceOrder, Transaction, PMOCPlan } from './types';
 import { 
   initialCustomers, 
   initialEquipment, 
   initialAppointments, 
   initialServiceOrders, 
-  initialTransactions 
+  initialTransactions,
+  initialPMOCPlans
 } from './initialData';
 
 // Icons
-import { LayoutDashboard, Users, Cpu, Calendar, FileText, Landmark, Menu, X, Snowflake, Building } from 'lucide-react';
+import { LayoutDashboard, Users, Cpu, Calendar, FileText, Landmark, Menu, X, Snowflake, Building, ShieldCheck } from 'lucide-react';
 
 // Views
 import DashboardView from './components/DashboardView';
@@ -19,6 +20,7 @@ import ScheduleView from './components/ScheduleView';
 import ServiceOrdersView from './components/ServiceOrdersView';
 import FinancialView from './components/FinancialView';
 import CompanyProfileView from './components/CompanyProfileView';
+import PMOCView from './components/PMOCView';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('Dashboard');
@@ -30,6 +32,7 @@ export default function App() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [pmocPlans, setPmocPlans] = useState<PMOCPlan[]>([]);
 
   // Cross-view creation states (e.g. creating OS from schedule page)
   const [activeOSForCreation, setActiveOSForCreation] = useState<{ customerId: string; title: string; type: string } | null>(null);
@@ -42,6 +45,7 @@ export default function App() {
     const storedAppointments = localStorage.getItem('climafrio_appointments');
     const storedServiceOrders = localStorage.getItem('climafrio_service_orders');
     const storedTransactions = localStorage.getItem('climafrio_transactions');
+    const storedPMOC = localStorage.getItem('climafrio_pmoc_plans');
 
     if (storedCustomers) setCustomers(JSON.parse(storedCustomers));
     else {
@@ -71,6 +75,12 @@ export default function App() {
     else {
       setTransactions(initialTransactions);
       localStorage.setItem('climafrio_transactions', JSON.stringify(initialTransactions));
+    }
+
+    if (storedPMOC) setPmocPlans(JSON.parse(storedPMOC));
+    else {
+      setPmocPlans(initialPMOCPlans);
+      localStorage.setItem('climafrio_pmoc_plans', JSON.stringify(initialPMOCPlans));
     }
   }, []);
 
@@ -219,6 +229,18 @@ export default function App() {
     saveState('climafrio_transactions', updated, setTransactions);
   };
 
+  // PMOC Plans
+  const handleSavePMOCPlan = (plan: PMOCPlan) => {
+    const exists = pmocPlans.some(p => p.id === plan.id);
+    const updated = exists ? pmocPlans.map(p => p.id === plan.id ? plan : p) : [plan, ...pmocPlans];
+    saveState('climafrio_pmoc_plans', updated, setPmocPlans);
+  };
+
+  const handleDeletePMOCPlan = (id: string) => {
+    const updated = pmocPlans.filter(p => p.id !== id);
+    saveState('climafrio_pmoc_plans', updated, setPmocPlans);
+  };
+
   // Navigation handlers
   const handleGenerateOSFromAppointment = (appt: Appointment) => {
     setActiveOSForCreation({
@@ -236,6 +258,7 @@ export default function App() {
     { name: 'Equipamentos', icon: Cpu },
     { name: 'Agenda', icon: Calendar },
     { name: 'Ordem de Serviço', icon: FileText },
+    { name: 'PMOC / ART', icon: ShieldCheck },
     { name: 'Financeiro', icon: Landmark },
     { name: 'Minha Empresa', icon: Building }
   ];
@@ -394,6 +417,16 @@ export default function App() {
               onClearActiveOSCreation={() => setActiveOSForCreation(null)}
               onAddCustomer={handleAddCustomer}
               onAddEquipment={handleAddEquipment}
+            />
+          )}
+
+          {activeTab === 'PMOC / ART' && (
+            <PMOCView
+              customers={customers}
+              equipments={equipment}
+              pmocPlans={pmocPlans}
+              onSavePMOCPlan={handleSavePMOCPlan}
+              onDeletePMOCPlan={handleDeletePMOCPlan}
             />
           )}
 

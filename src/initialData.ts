@@ -1,4 +1,4 @@
-import { Customer, Equipment, Appointment, ServiceOrder, Transaction } from './types';
+import { Customer, Equipment, Appointment, ServiceOrder, Transaction, PMOCPlan } from './types';
 
 export const initialCustomers: Customer[] = [
   {
@@ -273,5 +273,207 @@ export const initialTransactions: Transaction[] = [
     category: 'Ferramentas',
     date: '2026-06-28',
     description: 'Aquisição de bomba de vácuo portátil compacta'
+  }
+];
+
+export const initialPMOCPlans: PMOCPlan[] = [
+  {
+    id: 'PMOC-2026-001',
+    customerId: 'c2',
+    buildingName: 'Restaurante & Cozinha Industrial Sabor e Brasa',
+    cnpjOrCpf: '12.345.678/0001-99',
+    addressText: 'Rua Augusta, 450 - Consolação, São Paulo - SP, CEP: 01305-000',
+    contactPerson: 'Gerente Rogério Santos',
+    contactPhone: '(11) 3222-4455',
+    airConditionedAreaM2: 280,
+    totalThermalCapacityBtu: 84000,
+    totalThermalCapacityTR: 7.0,
+    fixedOccupants: 18,
+    transientOccupants: 120,
+    activityType: 'Comercial / Restaurante & Alimentação',
+    status: 'vigente',
+    startDate: '2026-01-01',
+    endDate: '2026-12-31',
+    equipmentIds: ['e2', 'e3'],
+    compliancePercentage: 96,
+    notes: 'Edifício com alta circulação pública e ambiente de cocção. Plano em estrita conformidade com a Lei Federal nº 13.589/2018 e Portaria MS nº 3.523/1998.',
+    technicalResp: {
+      technicalManagerName: 'Eng. Rafael Mendes de Oliveira',
+      professionalTitle: 'Engenheiro Mecânico',
+      councilType: 'CREA',
+      councilNumber: 'CREA-SP 5062891440/D',
+      councilState: 'SP',
+      cpf: '241.982.538-44',
+      artOrTrtNumber: 'ART Nº 2802723024881-SP',
+      artIssueDate: '2026-01-10',
+      artValidUntil: '2027-01-09',
+      signedAt: '2026-01-10T14:30:00',
+      signatureUrl: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=300&q=80',
+      legalTextDeclaration: 'Declaro para os devidos fins de direito e em observância à Lei Federal nº 13.589 de 04 de janeiro de 2018, à Portaria GM/MS nº 3.523/1998 e à Resolução RE nº 09/2003 da ANVISA, que assumo a Responsabilidade Técnica Mecânica pela elaboração, supervisão e execução do Plano de Manutenção, Operação e Controle (PMOC) dos sistemas de climatização deste empreendimento.'
+    },
+    routines: [
+      {
+        id: 'r1',
+        item: 'Higienização e lavagem de filtros de ar primários (G1/G4)',
+        component: 'Filtro',
+        frequency: 'Mensal',
+        normativeReference: 'Portaria MS 3.523 / NBR 13971',
+        lastCompletedDate: '2026-09-10',
+        status: 'conforme',
+        notes: 'Filtros lavados com detergente neutro bactericida e secos à sombra.'
+      },
+      {
+        id: 'r2',
+        item: 'Limpeza e desinfecção química da bandeja de condensado e pastilhas bactericidas',
+        component: 'Bandeja/Dreno',
+        frequency: 'Mensal',
+        normativeReference: 'Portaria MS 3.523 / NBR 13971',
+        lastCompletedDate: '2026-09-10',
+        status: 'conforme',
+        notes: 'Eliminação total de biofilme e aplicação de pastilhas desinfetantes.'
+      },
+      {
+        id: 'r3',
+        item: 'Desobstrução, verificação de caimento e teste de fluxo da linha de dreno',
+        component: 'Bandeja/Dreno',
+        frequency: 'Mensal',
+        normativeReference: 'NBR 13971',
+        lastCompletedDate: '2026-09-10',
+        status: 'conforme',
+        notes: 'Teste de vazão hidráulica realizado com água potável colorida.'
+      },
+      {
+        id: 'r4',
+        item: 'Lavagem das aletas e serpentinas do evaporador com desincrustante biodegradável',
+        component: 'Serpentina',
+        frequency: 'Trimestral',
+        normativeReference: 'Portaria MS 3.523 / NBR 14679',
+        lastCompletedDate: '2026-07-15',
+        status: 'conforme',
+        notes: 'Serpentina limpa e desobstruída sem amassamento de aletas.'
+      },
+      {
+        id: 'r5',
+        item: 'Limpeza por hidro-jateamento de baixa pressão na serpentina do condensador',
+        component: 'Serpentina',
+        frequency: 'Trimestral',
+        normativeReference: 'NBR 13971',
+        lastCompletedDate: '2026-07-15',
+        status: 'conforme',
+        notes: 'Remoção de poeira e fuligem urbana nas unidades externas.'
+      },
+      {
+        id: 'r6',
+        item: 'Inspeção do ventilador/turbina, medição de vibração e fixação mecânica',
+        component: 'Ventilação',
+        frequency: 'Trimestral',
+        normativeReference: 'NBR 13971',
+        lastCompletedDate: '2026-07-15',
+        status: 'conforme',
+        notes: 'Turbinas alinhadas e balanceadas, ruído dentro dos limites de conforto.'
+      },
+      {
+        id: 'r7',
+        item: 'Medição da corrente nominal (A), tensão (V) e reaperto de conexões elétricas',
+        component: 'Elétrica',
+        frequency: 'Semestral',
+        normativeReference: 'NBR 5410 / NBR 13971',
+        lastCompletedDate: '2026-06-20',
+        status: 'conforme',
+        notes: 'Terminais reapertados com torquímetro; corrente de trabalho 100% nominal.'
+      },
+      {
+        id: 'r8',
+        item: 'Aferição de superaquecimento, sub-resfriamento e verificação de estanqueidade de fluido refrigerante',
+        component: 'Refrigeração',
+        frequency: 'Semestral',
+        normativeReference: 'Portaria 3.523 / NBR 13971',
+        lastCompletedDate: '2026-06-20',
+        status: 'conforme',
+        notes: 'Pressões estabilizadas com R410A; teste de estanqueidade negativo para vazamentos.'
+      },
+      {
+        id: 'r9',
+        item: 'Inspeção e recomposição do isolamento térmico das linhas frigorígenas de sucção e expansão',
+        component: 'Refrigeração',
+        frequency: 'Semestral',
+        normativeReference: 'NBR 13971',
+        lastCompletedDate: '2026-06-20',
+        status: 'conforme',
+        notes: 'Isolamento de elastômero em perfeito estado, fitas aluminizadas íntegras.'
+      },
+      {
+        id: 'r10',
+        item: 'Análise laboratorial de qualidade do ar de interiores (Fungos, CO2, Poeira e Umidade)',
+        component: 'Qualidade do Ar',
+        frequency: 'Anual',
+        normativeReference: 'Resolução ANVISA RE nº 09/2003',
+        lastCompletedDate: '2026-01-20',
+        status: 'conforme',
+        notes: 'Laudo microbiológico emitido pelo laboratório credenciado. Relação I/E < 1,5.'
+      }
+    ],
+    executionHistory: [
+      {
+        id: 'ex-1',
+        monthYear: '2026-04',
+        executedDate: '2026-04-12',
+        technicianName: 'Carlos Eduardo Lima (Téc. Mecânico)',
+        status: 'concluido',
+        routinesCheckedCount: 6,
+        totalRoutinesCount: 6,
+        observations: 'Manutenção preventiva mensal executada conforme PMOC. Equipamentos limpos.'
+      },
+      {
+        id: 'ex-2',
+        monthYear: '2026-05',
+        executedDate: '2026-05-14',
+        technicianName: 'Carlos Eduardo Lima (Téc. Mecânico)',
+        status: 'concluido',
+        routinesCheckedCount: 6,
+        totalRoutinesCount: 6,
+        observations: 'Filtros limpos e drenos testados. Sem anormalidades.'
+      },
+      {
+        id: 'ex-3',
+        monthYear: '2026-06',
+        executedDate: '2026-06-20',
+        technicianName: 'Carlos Eduardo Lima (Téc. Mecânico)',
+        status: 'concluido',
+        routinesCheckedCount: 9,
+        totalRoutinesCount: 9,
+        observations: 'Revisão semestral completa. Medições elétricas e pressões conferidas.'
+      },
+      {
+        id: 'ex-4',
+        monthYear: '2026-07',
+        executedDate: '2026-07-15',
+        technicianName: 'Carlos Eduardo Lima (Téc. Mecânico)',
+        status: 'concluido',
+        routinesCheckedCount: 6,
+        totalRoutinesCount: 6,
+        observations: 'Higienização trimestral das serpentinas de evaporador e condensador.'
+      },
+      {
+        id: 'ex-5',
+        monthYear: '2026-08',
+        executedDate: '2026-08-18',
+        technicianName: 'Carlos Eduardo Lima (Téc. Mecânico)',
+        status: 'concluido',
+        routinesCheckedCount: 6,
+        totalRoutinesCount: 6,
+        observations: 'Substituição de pastilha bactericida no dreno da cozinha.'
+      },
+      {
+        id: 'ex-6',
+        monthYear: '2026-09',
+        executedDate: '2026-09-10',
+        technicianName: 'Carlos Eduardo Lima (Téc. Mecânico)',
+        status: 'concluido',
+        routinesCheckedCount: 6,
+        totalRoutinesCount: 6,
+        observations: 'Vistoria e manutenção mensal realizada. Sistema operando em alta eficiência.'
+      }
+    ]
   }
 ];

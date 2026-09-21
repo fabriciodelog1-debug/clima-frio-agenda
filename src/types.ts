@@ -115,3 +115,67 @@ export interface CompanyProfile {
   bannerUrl?: string;
 }
 
+export type PMOCFrequency = 'Mensal' | 'Bimestral' | 'Trimestral' | 'Semestral' | 'Anual';
+
+export interface PMOCRoutine {
+  id: string;
+  item: string;
+  component: 'Filtro' | 'Bandeja/Dreno' | 'Serpentina' | 'Ventilação' | 'Elétrica' | 'Refrigeração' | 'Qualidade do Ar';
+  frequency: PMOCFrequency;
+  normativeReference: string;
+  lastCompletedDate?: string;
+  status: 'conforme' | 'pendente' | 'atencao';
+  notes?: string;
+}
+
+export interface PMOCExecutionRecord {
+  id: string;
+  monthYear: string; // e.g. "2026-06"
+  executedDate?: string;
+  technicianName: string;
+  status: 'concluido' | 'pendente' | 'atrasado';
+  routinesCheckedCount: number;
+  totalRoutinesCount: number;
+  observations?: string;
+}
+
+export interface TechnicalResponsibility {
+  technicalManagerName: string;
+  professionalTitle: 'Engenheiro Mecânico' | 'Engenheiro Industrial Mecânico' | 'Técnico em Refrigeração e Climatização' | 'Técnico em Mecânica' | 'Outro';
+  councilType: 'CREA' | 'CFT / CRT';
+  councilNumber: string;
+  councilState: string;
+  cpf: string;
+  artOrTrtNumber: string;
+  artIssueDate: string;
+  artValidUntil: string;
+  signatureUrl?: string;
+  signedAt?: string;
+  legalTextDeclaration?: string;
+}
+
+export interface PMOCPlan {
+  id: string;
+  customerId: string;
+  buildingName: string;
+  cnpjOrCpf: string;
+  addressText: string;
+  contactPerson: string;
+  contactPhone: string;
+  airConditionedAreaM2: number;
+  totalThermalCapacityBtu: number;
+  totalThermalCapacityTR: number;
+  fixedOccupants: number;
+  transientOccupants: number;
+  activityType: string;
+  status: 'vigente' | 'em_revisao' | 'vencido';
+  startDate: string;
+  endDate: string;
+  equipmentIds: string[];
+  technicalResp: TechnicalResponsibility;
+  routines: PMOCRoutine[];
+  executionHistory: PMOCExecutionRecord[];
+  notes?: string;
+  compliancePercentage: number;
+}
+
