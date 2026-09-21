@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Transaction, ServiceOrder } from '../types';
-import { DollarSign, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Search, Plus, Calendar, Filter, X, CreditCard } from 'lucide-react';
+import { Transaction, ServiceOrder, Customer } from '../types';
+import { DollarSign, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Search, Plus, Calendar, Filter, X, CreditCard, Share2, Receipt as ReceiptIcon, CheckCircle2, Clock, MessageSquare, ArrowRight } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface FinancialViewProps {
   transactions: Transaction[];
   serviceOrders: ServiceOrder[];
+  customers?: Customer[];
   onAddTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   onDeleteTransaction: (id: string) => void;
+  onMarkOsPaid?: (os: ServiceOrder) => void;
+  onOpenReceiptForOs?: (os: ServiceOrder) => void;
 }
 
 const CATEGORIES_INFLOW = ['Instalação', 'Manutenção Preventiva', 'Manutenção Corretiva', 'Orçamento Pago', 'Outro'];
@@ -19,12 +22,16 @@ const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 export default function FinancialView({
   transactions,
   serviceOrders,
+  customers = [],
   onAddTransaction,
-  onDeleteTransaction
+  onDeleteTransaction,
+  onMarkOsPaid,
+  onOpenReceiptForOs
 }: FinancialViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showReceivablesOnly, setShowReceivablesOnly] = useState(false);
 
   // Form States
   const [formType, setFormType] = useState<'income' | 'expense'>('income');
@@ -32,6 +39,27 @@ export default function FinancialView({
   const [formCategory, setFormCategory] = useState<string>('Instalação');
   const [formDate, setFormDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [formDescription, setFormDescription] = useState<string>('');
+
+  // Pending payments from Service Orders
+  const pendingOrders = serviceOrders.filter(so => so.paymentStatus === 'pending');
+  const outstandingReceivable = pendingOrders.reduce((acc, so) => acc + so.totalValue, 0);
+
+  const handleSendCobrançaWhatsApp = (os: ServiceOrder) => {
+    const client = customers.find(c => c.id === os.customerId);
+    const cleanPhone = client?.phone.replace(/\D/g, '') || '';
+    const phoneFormatted = cleanPhone.length >= 10 ? `55${cleanPhone}` : '';
+    const message = encodeURIComponent(
+      `*LEMBRETE AMIGÁVEL - CLIMA FRIO CLIMATIZAÇÃO*\n\n` +
+      `Olá *${client?.name || 'Cliente'}*, tudo bem? Esperamos que o seu ar condicionado esteja funcionando com excelente rendimento!\n\n` +
+      `Passando apenas para encaminhar os dados para o acerto dos serviços realizados:\n` +
+      `📋 *Ordem de Serviço:* ${os.id}\n` +
+      `🛠️ *Serviço:* ${os.servicePerformed || os.issueReported}\n` +
+      `💰 *Valor Pendente:* R$ ${os.totalValue.toFixed(2)}\n\n` +
+      `Se preferir, aceitamos pagamento instantâneo via Pix ou cartão. Assim que confirmar, emitimos seu Recibo de Pagamento com garantia!\n` +
+      `Qualquer dúvida estamos à sua disposição. Agradecemos pela confiança!`
+    );
+    window.open(phoneFormatted ? `https://wa.me/${phoneFormatted}?text=${message}` : `https://wa.me/?text=${message}`, '_blank');
+  };
 
   // 1. Math calculations
   const totalIncomes = transactions
@@ -43,11 +71,6 @@ export default function FinancialView({
     .reduce((acc, t) => acc + t.amount, 0);
 
   const currentBalance = totalIncomes - totalExpenses;
-
-  // Pending payments from Service Orders (Status: completed, paymentStatus: pending)
-  const outstandingReceivable = serviceOrders
-    .filter(so => so.status === 'completed' && so.paymentStatus === 'pending')
-    .reduce((acc, so) => acc + so.totalValue, 0);
 
   // 2. Filter transactions
   const filteredTransactions = transactions.filter(t => {
@@ -219,7 +242,10 @@ export default function FinancialView({
         </div>
 
         {/* Receivable Card */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+        <div 
+          onClick={() => setShowReceivablesOnly(!showReceivablesOnly)}
+          className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3 cursor-pointer hover:border-amber-300 transition"
+        >
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">Valores Pendentes (A receber)</span>
             <div className="p-2 bg-yellow-50 text-yellow-600 rounded-lg">
@@ -230,11 +256,132 @@ export default function FinancialView({
             <span className="text-2xl font-bold font-mono text-slate-700">
               R$ {outstandingReceivable.toFixed(2)}
             </span>
-            <p className="text-[10px] text-yellow-600 mt-1 font-semibold">
-              O.S. Concluídas aguardando pgto
+            <p className="text-[10px] text-yellow-600 mt-1 font-semibold flex items-center justify-between">
+              <span>{pendingOrders.length} O.S. aguardando pgto</span>
+              <span className="underline font-bold text-[10px]">Ver cobranças</span>
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Agenda Boa Feature: Contas a Receber & Cobrança Amigável */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4" id="contas-a-receber-panel">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] uppercase font-bold tracking-wider bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Clock size={11} />
+                <span>Estilo Agenda Boa</span>
+              </span>
+              <span className="text-[10px] uppercase font-bold tracking-wider bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                Cobrança Amigável WhatsApp
+              </span>
+            </div>
+            <h3 className="font-black text-slate-900 text-base">
+              Contas a Receber ({pendingOrders.length})
+            </h3>
+            <p className="text-xs text-slate-500">
+              Envie lembretes educados de pagamento via WhatsApp com chave Pix e emita o recibo assim que compensar.
+            </p>
+          </div>
+
+          <div className="text-right shrink-0">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Pendente</span>
+            <span className="text-xl font-black font-mono text-amber-600">
+              R$ {outstandingReceivable.toFixed(2)}
+            </span>
+          </div>
+        </div>
+
+        {pendingOrders.length === 0 ? (
+          <div className="p-6 bg-slate-50 rounded-xl text-center">
+            <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2">
+              <CheckCircle2 size={20} />
+            </div>
+            <h4 className="font-bold text-slate-800 text-sm">Tudo em dia!</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-0.5">
+              Não há ordens de serviço pendentes de pagamento no momento. Todas as cobranças foram quitadas.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {pendingOrders.map(os => {
+              const client = customers.find(c => c.id === os.customerId);
+
+              return (
+                <div 
+                  key={os.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200/80 gap-3 transition"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-xs font-bold bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-800">
+                        {os.id}
+                      </span>
+                      <span className="font-bold text-slate-900 text-sm">
+                        {client?.name || 'Cliente'}
+                      </span>
+                      {client?.phone && (
+                        <span className="text-xs text-slate-500 font-mono">
+                          ({client.phone})
+                        </span>
+                      )}
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 uppercase">
+                        Aguardando Pagamento
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-600 line-clamp-1">
+                      {os.servicePerformed || os.issueReported || 'Serviço técnico executado'}
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      Aberta em: {new Date(os.dateOpened + 'T12:00:00').toLocaleDateString('pt-BR')}
+                      {os.dateClosed && ` • Finalizada em: ${new Date(os.dateClosed + 'T12:00:00').toLocaleDateString('pt-BR')}`}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200">
+                    <div className="text-left sm:text-right">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Valor</span>
+                      <span className="text-base font-black font-mono text-slate-900">
+                        R$ {os.totalValue.toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleSendCobrançaWhatsApp(os)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer"
+                        title="Enviar lembrete educado no WhatsApp"
+                      >
+                        <Share2 size={13} />
+                        <span>Cobrar no WhatsApp</span>
+                      </button>
+
+                      {onMarkOsPaid && (
+                        <button
+                          onClick={() => {
+                            if (confirm(`Confirmar recebimento de R$ ${os.totalValue.toFixed(2)} da OS ${os.id}?`)) {
+                              onMarkOsPaid(os);
+                              if (onOpenReceiptForOs) {
+                                onOpenReceiptForOs(os);
+                              }
+                            }
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer"
+                          title="Baixar pagamento e gerar recibo"
+                        >
+                          <ReceiptIcon size={13} />
+                          <span>Baixar & Recibo</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Visual Analytics Charts */}

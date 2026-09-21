@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ServiceOrder, Customer, Equipment, OSStatus, OSChecklist } from '../types';
-import { Search, Plus, FileText, CheckSquare, Square, DollarSign, Printer, Calendar, ShieldCheck, X, Edit2, AlertCircle, Upload, Camera, Image, Share2, FileDown } from 'lucide-react';
+import { ServiceOrder, Customer, Equipment, OSStatus, OSChecklist, CatalogItem } from '../types';
+import { Search, Plus, FileText, CheckSquare, Square, DollarSign, Printer, Calendar, ShieldCheck, X, Edit2, AlertCircle, Upload, Camera, Image, Share2, FileDown, Wrench, Receipt as ReceiptIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateOSPDF, getWhatsAppShareText } from '../utils/pdfGenerator';
 
@@ -8,6 +8,7 @@ interface ServiceOrdersViewProps {
   serviceOrders: ServiceOrder[];
   customers: Customer[];
   equipment: Equipment[];
+  catalogItems?: CatalogItem[];
   onAddOS: (os: Omit<ServiceOrder, 'id'>) => void;
   onEditOS: (os: ServiceOrder) => void;
   onDeleteOS: (id: string) => void;
@@ -15,6 +16,7 @@ interface ServiceOrdersViewProps {
   onClearActiveOSCreation?: () => void;
   onAddCustomer?: (customer: Omit<Customer, 'id' | 'createdAt'>) => Customer;
   onAddEquipment?: (eq: Omit<Equipment, 'id'>) => Equipment;
+  onOpenReceiptForOs?: (os: ServiceOrder) => void;
 }
 
 const CHECKLIST_LABELS: { [key in keyof OSChecklist]: string } = {
@@ -31,13 +33,15 @@ export default function ServiceOrdersView({
   serviceOrders,
   customers,
   equipment,
+  catalogItems = [],
   onAddOS,
   onEditOS,
   onDeleteOS,
   activeOSForCreation,
   onClearActiveOSCreation,
   onAddCustomer,
-  onAddEquipment
+  onAddEquipment,
+  onOpenReceiptForOs
 }: ServiceOrdersViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -87,6 +91,37 @@ export default function ServiceOrdersView({
   const [isWhatsAppGuideOpen, setIsWhatsAppGuideOpen] = useState<boolean>(false);
   const [whatsAppGuideUrl, setWhatsAppGuideUrl] = useState<string>('');
   const [whatsAppGuideFileName, setWhatsAppGuideFileName] = useState<string>('');
+
+  const handleApplyCatalogItem = (itemId: string) => {
+    if (!itemId) return;
+    const item = catalogItems.find(i => i.id === itemId);
+    if (!item) return;
+
+    if (!formServicePerformed) {
+      setFormServicePerformed(item.name + (item.description ? ` - ${item.description}` : ''));
+    } else {
+      setFormServicePerformed(prev => `${prev}\n• ${item.name}`);
+    }
+
+    if (item.type === 'servico') {
+      setFormLaborValue(prev => (prev || 0) + item.defaultPrice);
+    } else {
+      setFormPartsValue(prev => (prev || 0) + item.defaultPrice);
+    }
+
+    if (item.defaultWarrantyMonths && (!formNextMaintenanceMonths || formNextMaintenanceMonths === 0)) {
+      setFormNextMaintenanceMonths(item.defaultWarrantyMonths);
+    }
+
+    if (item.category === 'Higienização & Limpeza') {
+      setFormChecklist(prev => ({
+        ...prev,
+        cleanEvaporator: true,
+        cleanCondenser: true,
+        sanitizeUnit: true
+      }));
+    }
+  };
 
   // Handle pre-fill from agenda if trigger exists
   React.useEffect(() => {
@@ -517,6 +552,17 @@ export default function ServiceOrdersView({
                         );
                       })()}
 
+                      {onOpenReceiptForOs && (
+                        <button
+                          onClick={() => onOpenReceiptForOs(selectedOS)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-500 transition shadow-sm cursor-pointer"
+                          title="Gerar Recibo Profissional de Pagamento"
+                        >
+                          <ReceiptIcon size={14} />
+                          <span>Emitir Recibo</span>
+                        </button>
+                      )}
+
                       <button
                         id={`btn-edit-os-${selectedOS.id}`}
                         onClick={(e) => handleOpenEdit(selectedOS, e)}
@@ -867,6 +913,17 @@ export default function ServiceOrdersView({
                                 {selectedOS.paymentStatus === 'paid' ? 'PAGO' : 'PENDENTE'}
                               </span>
                             </div>
+
+                            {onOpenReceiptForOs && (
+                              <button
+                                onClick={() => onOpenReceiptForOs(selectedOS)}
+                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm"
+                                title="Gerar Recibo Oficial desta Ordem de Serviço"
+                              >
+                                <ReceiptIcon size={14} />
+                                <span>Recibo</span>
+                              </button>
+                            )}
                           </div>
                         </div>
 
@@ -1156,6 +1213,38 @@ Gostaria de agendar uma visita para esta semana? Estamos com horários disponív
                     </div>
                   )}
                 </div>
+
+                {/* Quick Catalog Picker (Agenda Boa style) */}
+                {catalogItems && catalogItems.length > 0 && (
+                  <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50/60 rounded-xl border border-blue-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-blue-600 text-white rounded-lg shrink-0">
+                        <Wrench size={14} />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-blue-900 block">Preencher do Catálogo (Estilo Agenda Boa)</span>
+                        <span className="text-[10px] text-blue-700">Selecione para autocompletar descrição e valores</span>
+                      </div>
+                    </div>
+
+                    <select
+                      id="form-os-catalog-picker"
+                      onChange={(e) => {
+                        handleApplyCatalogItem(e.target.value);
+                        e.target.value = '';
+                      }}
+                      defaultValue=""
+                      className="px-3 py-1.5 bg-white border border-blue-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs"
+                    >
+                      <option value="" disabled>+ Escolher do Catálogo...</option>
+                      {catalogItems.map(item => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} — R$ {item.defaultPrice.toFixed(2)} ({item.type === 'servico' ? 'Serviço' : 'Peça'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 {/* Issue and Service Performed */}
                 <div className="space-y-4">

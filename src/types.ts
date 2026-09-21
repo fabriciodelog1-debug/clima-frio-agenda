@@ -232,3 +232,44 @@ export interface DiagnosticReport {
   technicianSignatureUrl?: string;
 }
 
+export type CatalogCategory = 
+  | 'Higienização & Limpeza' 
+  | 'Instalação' 
+  | 'Conserto & Reparo' 
+  | 'Carga de Gás / Fluido' 
+  | 'Peças & Componentes' 
+  | 'Insumos & Materiais' 
+  | 'Visita & Laudo';
+
+export interface CatalogItem {
+  id: string;
+  name: string;
+  category: CatalogCategory;
+  type: 'servico' | 'peca';
+  defaultPrice: number;
+  costPrice?: number; // Preço de custo para cálculo de margem
+  unit: string; // 'serviço', 'un', 'kg', 'metro', 'par'
+  description?: string;
+  defaultWarrantyMonths?: number;
+}
+
+export type PaymentMethod = 'Pix' | 'Dinheiro' | 'Cartão de Crédito' | 'Cartão de Débito' | 'Transferência Bancária' | 'Boleto';
+
+export interface Receipt {
+  id: string; // e.g. REC-2026-001
+  receiptNumber: string;
+  customerId: string;
+  customerName: string;
+  customerCpfCnpj?: string;
+  customerPhone?: string;
+  amount: number;
+  amountInWords: string; // Valor por extenso (ex: "Trezentos e cinquenta reais")
+  paymentMethod: PaymentMethod;
+  paymentDate: string; // YYYY-MM-DD
+  serviceDescription: string;
+  linkedOsId?: string;
+  signatureUrl?: string; // Assinatura digital coletada na tela
+  notes?: string;
+  createdAt: string;
+}
+

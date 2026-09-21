@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Customer, Equipment, Appointment, ServiceOrder, Transaction, PMOCPlan, DiagnosticReport } from './types';
+import { Customer, Equipment, Appointment, ServiceOrder, Transaction, PMOCPlan, DiagnosticReport, Receipt, CatalogItem } from './types';
 import { 
   initialCustomers, 
   initialEquipment, 
@@ -7,7 +7,9 @@ import {
   initialServiceOrders, 
   initialTransactions,
   initialPMOCPlans,
-  initialDiagnosticReports
+  initialDiagnosticReports,
+  initialReceipts,
+  initialCatalogItems
 } from './initialData';
 
 // Icons
@@ -28,7 +30,10 @@ import {
   ChevronRight,
   Sparkles,
   Info,
-  Wrench
+  Wrench,
+  Receipt as ReceiptIcon,
+  Tag,
+  Package
 } from 'lucide-react';
 
 // Views
@@ -41,6 +46,8 @@ import FinancialView from './components/FinancialView';
 import CompanyProfileView from './components/CompanyProfileView';
 import PMOCView from './components/PMOCView';
 import DiagnosticReportsView from './components/DiagnosticReportsView';
+import ReceiptsView from './components/ReceiptsView';
+import CatalogView from './components/CatalogView';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('Dashboard');
@@ -55,10 +62,13 @@ export default function App() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [pmocPlans, setPmocPlans] = useState<PMOCPlan[]>([]);
   const [diagnosticReports, setDiagnosticReports] = useState<DiagnosticReport[]>([]);
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
 
   // Cross-view creation states (e.g. creating OS from schedule page)
   const [activeOSForCreation, setActiveOSForCreation] = useState<{ customerId: string; title: string; type: string } | null>(null);
   const [selectedOSForSheet, setSelectedOSForSheet] = useState<ServiceOrder | null>(null);
+  const [initialReceiptForCreation, setInitialReceiptForCreation] = useState<Partial<Receipt> | null>(null);
 
   // Initialize data from localStorage or fallback to mock data
   useEffect(() => {
@@ -69,6 +79,8 @@ export default function App() {
     const storedTransactions = localStorage.getItem('climafrio_transactions');
     const storedPMOC = localStorage.getItem('climafrio_pmoc_plans');
     const storedDiagnostics = localStorage.getItem('climafrio_diagnostic_reports');
+    const storedReceipts = localStorage.getItem('climafrio_receipts');
+    const storedCatalog = localStorage.getItem('climafrio_catalog_items');
 
     if (storedCustomers) setCustomers(JSON.parse(storedCustomers));
     else {
@@ -110,6 +122,18 @@ export default function App() {
     else {
       setDiagnosticReports(initialDiagnosticReports);
       localStorage.setItem('climafrio_diagnostic_reports', JSON.stringify(initialDiagnosticReports));
+    }
+
+    if (storedReceipts) setReceipts(JSON.parse(storedReceipts));
+    else {
+      setReceipts(initialReceipts);
+      localStorage.setItem('climafrio_receipts', JSON.stringify(initialReceipts));
+    }
+
+    if (storedCatalog) setCatalogItems(JSON.parse(storedCatalog));
+    else {
+      setCatalogItems(initialCatalogItems);
+      localStorage.setItem('climafrio_catalog_items', JSON.stringify(initialCatalogItems));
     }
   }, []);
 
@@ -284,6 +308,49 @@ export default function App() {
     saveState('climafrio_diagnostic_reports', updated, setDiagnosticReports);
   };
 
+  // Receipts Mutators
+  const handleSaveReceipt = (receipt: Receipt) => {
+    const exists = receipts.some(r => r.id === receipt.id);
+    const updated = exists 
+      ? receipts.map(r => r.id === receipt.id ? receipt : r)
+      : [receipt, ...receipts];
+    saveState('climafrio_receipts', updated, setReceipts);
+  };
+
+  const handleDeleteReceipt = (id: string) => {
+    const updated = receipts.filter(r => r.id !== id);
+    saveState('climafrio_receipts', updated, setReceipts);
+  };
+
+  // Open Receipt from OS
+  const handleOpenReceiptForOS = (os: ServiceOrder) => {
+    const cust = customers.find(c => c.id === os.customerId);
+    const equip = equipment.find(e => e.id === os.equipmentId);
+    setInitialReceiptForCreation({
+      serviceOrderId: os.id,
+      customerName: cust?.name || 'Cliente',
+      customerDocument: cust?.cpf || cust?.cnpj || '',
+      amount: os.totalValue,
+      description: `Quitação referente à Ordem de Serviço #${os.id} (${os.issueReported}${equip ? ` - ${equip.brand} ${equip.model}` : ''})`,
+      paymentMethod: 'pix'
+    });
+    setActiveTab('Recibos');
+  };
+
+  // Catalog Mutators
+  const handleSaveCatalogItem = (item: CatalogItem) => {
+    const exists = catalogItems.some(i => i.id === item.id);
+    const updated = exists 
+      ? catalogItems.map(i => i.id === item.id ? item : i)
+      : [item, ...catalogItems];
+    saveState('climafrio_catalog_items', updated, setCatalogItems);
+  };
+
+  const handleDeleteCatalogItem = (id: string) => {
+    const updated = catalogItems.filter(i => i.id !== id);
+    saveState('climafrio_catalog_items', updated, setCatalogItems);
+  };
+
   // Navigation handlers
   const handleGenerateOSFromAppointment = (appt: Appointment) => {
     setActiveOSForCreation({
@@ -325,6 +392,14 @@ export default function App() {
           hint: 'Diagnóstico com envio em PDF/WhatsApp'
         },
         { 
+          id: 'Recibos', 
+          name: 'Recibos Digitais', 
+          icon: ReceiptIcon, 
+          badge: 'Assinatura',
+          badgeColor: 'bg-blue-100 text-blue-700',
+          hint: 'Recibo com valor por extenso e assinatura'
+        },
+        { 
           id: 'Agenda', 
           name: 'Agenda & Visitas', 
           icon: Calendar, 
@@ -354,6 +429,14 @@ export default function App() {
           badge: `${equipment.length}`,
           badgeColor: 'bg-slate-100 text-slate-700',
           hint: 'Aparelhos de ar cadastrados'
+        },
+        { 
+          id: 'Catálogo', 
+          name: 'Catálogo & Preços', 
+          icon: Tag, 
+          badge: `${catalogItems.length}`,
+          badgeColor: 'bg-emerald-100 text-emerald-700',
+          hint: 'Tabela de serviços e margem'
         }
       ]
     },
@@ -402,6 +485,10 @@ export default function App() {
       title: 'Laudos Técnicos de Diagnóstico & Conserto',
       subtitle: 'Emita laudos periciais com testes de pressão, salto térmico (ΔT), peças trocadas e envio em PDF/WhatsApp.'
     },
+    'Recibos': {
+      title: 'Recibos Profissionais de Pagamento',
+      subtitle: 'Emissão ágil de recibos de quitação com valor por extenso automático, assinatura na tela e envio em PDF/WhatsApp.'
+    },
     'Agenda': {
       title: 'Agenda de Atendimentos',
       subtitle: 'Controle de visitas técnicas, preventivas e instalações agendadas com os clientes.'
@@ -413,6 +500,10 @@ export default function App() {
     'Equipamentos': {
       title: 'Parque de Equipamentos',
       subtitle: 'Inventário de condicionadores de ar (Split, Cassete, Piso Teto) com histórico e BTUs.'
+    },
+    'Catálogo': {
+      title: 'Catálogo de Serviços, Peças & Tabela de Preços',
+      subtitle: 'Tabela padronizada com cálculo de margem de lucro para higienização, instalação, cargas de gás e componentes.'
     },
     'PMOC / ART': {
       title: 'PMOC & Responsabilidade Técnica (ART/TRT)',
@@ -662,6 +753,32 @@ export default function App() {
                         <span className="text-[10px] text-slate-400 font-normal">Cadastrar cliente e endereço</span>
                       </div>
                     </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab('Recibos');
+                        setIsQuickActionOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 text-slate-700 hover:text-blue-700 flex items-center gap-2 transition border-t border-slate-100 pt-2"
+                    >
+                      <ReceiptIcon size={16} className="text-blue-600" />
+                      <div>
+                        <span className="block font-bold">Emitir Recibo</span>
+                        <span className="text-[10px] text-slate-400 font-normal">Com valor por extenso e assinatura</span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab('Catálogo');
+                        setIsQuickActionOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 flex items-center gap-2 transition"
+                    >
+                      <Tag size={16} className="text-emerald-600" />
+                      <div>
+                        <span className="block font-bold">Tabela de Preços</span>
+                        <span className="text-[10px] text-slate-400 font-normal">Catálogo de serviços e peças</span>
+                      </div>
+                    </button>
                   </div>
                 </>
               )}
@@ -698,6 +815,18 @@ export default function App() {
             />
           )}
 
+          {activeTab === 'Recibos' && (
+            <ReceiptsView
+              receipts={receipts}
+              customers={customers}
+              serviceOrders={serviceOrders}
+              onSaveReceipt={handleSaveReceipt}
+              onDeleteReceipt={handleDeleteReceipt}
+              initialReceiptData={initialReceiptForCreation}
+              onClearInitialData={() => setInitialReceiptForCreation(null)}
+            />
+          )}
+
           {activeTab === 'Clientes' && (
             <CustomersView
               customers={customers}
@@ -719,6 +848,22 @@ export default function App() {
             />
           )}
 
+          {activeTab === 'Catálogo' && (
+            <CatalogView
+              catalogItems={catalogItems}
+              onSaveItem={handleSaveCatalogItem}
+              onDeleteItem={handleDeleteCatalogItem}
+              onSelectForServiceOrder={(item) => {
+                setActiveOSForCreation({
+                  customerId: customers[0]?.id || '',
+                  title: `${item.name} (${item.type === 'servico' ? 'Mão de Obra' : 'Peça'})`,
+                  type: item.type === 'servico' ? 'Preventiva' : 'Corretiva'
+                });
+                setActiveTab('Ordem de Serviço');
+              }}
+            />
+          )}
+
           {activeTab === 'Agenda' && (
             <ScheduleView
               appointments={appointments}
@@ -735,6 +880,7 @@ export default function App() {
               serviceOrders={serviceOrders}
               customers={customers}
               equipment={equipment}
+              catalogItems={catalogItems}
               onAddOS={handleAddOS}
               onEditOS={handleEditOS}
               onDeleteOS={handleDeleteOS}
@@ -742,6 +888,7 @@ export default function App() {
               onClearActiveOSCreation={() => setActiveOSForCreation(null)}
               onAddCustomer={handleAddCustomer}
               onAddEquipment={handleAddEquipment}
+              onOpenReceiptForOs={handleOpenReceiptForOS}
             />
           )}
 
@@ -759,8 +906,13 @@ export default function App() {
             <FinancialView
               transactions={transactions}
               serviceOrders={serviceOrders}
+              customers={customers}
               onAddTransaction={handleAddTransaction}
               onDeleteTransaction={handleDeleteTransaction}
+              onMarkOsPaid={(os) => {
+                handleEditOS({ ...os, paymentStatus: 'paid' });
+              }}
+              onOpenReceiptForOs={handleOpenReceiptForOS}
             />
           )}
 

@@ -1,4 +1,4 @@
-import { Customer, Equipment, Appointment, ServiceOrder, Transaction, PMOCPlan, DiagnosticReport } from './types';
+import { Customer, Equipment, Appointment, ServiceOrder, Transaction, PMOCPlan, DiagnosticReport, CatalogItem, Receipt } from './types';
 
 export const initialCustomers: Customer[] = [
   {
@@ -558,5 +558,187 @@ export const initialDiagnosticReports: DiagnosticReport[] = [
     finalVerdict: 'Dreno 100% desobstruído e testado com 5L de água sem nenhum respingo ou vazamento. Serpentina desincrustada e ar higienizado. Rendimento térmico aprovado.',
     warrantyDays: 90,
     recommendations: 'Realizar lavagem quinzenal dos filtros laváveis e manter rotina PMOC mensal rigorosa devido ao ambiente com gordura da cozinha.'
+  }
+];
+
+export const initialCatalogItems: CatalogItem[] = [
+  {
+    id: 'cat-1',
+    name: 'Higienização Split High Wall (9.000 a 12.000 BTUs)',
+    category: 'Higienização & Limpeza',
+    type: 'servico',
+    defaultPrice: 180.00,
+    costPrice: 25.00, // Insumo bactericida + deslocamento
+    unit: 'serviço',
+    description: 'Limpeza profunda com bolsa coletora, desmontagem da carenagem, lavagem da turbina, serpentina, bandeja de dreno e aplicação de bactericida hospitalar.',
+    defaultWarrantyMonths: 3
+  },
+  {
+    id: 'cat-2',
+    name: 'Higienização Split High Wall (18.000 a 24.000 BTUs)',
+    category: 'Higienização & Limpeza',
+    type: 'servico',
+    defaultPrice: 250.00,
+    costPrice: 35.00,
+    unit: 'serviço',
+    description: 'Higienização de média capacidade com bactericida neutro, lavagem pressurizada sem sujeira no ambiente e teste térmico.',
+    defaultWarrantyMonths: 3
+  },
+  {
+    id: 'cat-3',
+    name: 'Higienização Completa Cassete / Piso Teto',
+    category: 'Higienização & Limpeza',
+    type: 'servico',
+    defaultPrice: 380.00,
+    costPrice: 50.00,
+    unit: 'serviço',
+    description: 'Higienização de grande porte com limpeza de bomba de dreno, bandeja coletora e aplicação de pastilha biocida de longa duração.',
+    defaultWarrantyMonths: 3
+  },
+  {
+    id: 'cat-4',
+    name: 'Instalação Split High Wall até 12.000 BTUs (Linha até 3m)',
+    category: 'Instalação',
+    type: 'servico',
+    defaultPrice: 450.00,
+    costPrice: 160.00, // Cobre, isolamento térmico, suporte, cabo pp
+    unit: 'serviço',
+    description: 'Instalação conforme manual do fabricante com furação serra-copo, suporte de condensadora, vácuo com vacuômetro digital abaixo de 500 microns e teste de pressão.',
+    defaultWarrantyMonths: 12
+  },
+  {
+    id: 'cat-5',
+    name: 'Instalação Split 18.000 a 24.000 BTUs (Linha até 3m)',
+    category: 'Instalação',
+    type: 'servico',
+    defaultPrice: 650.00,
+    costPrice: 220.00,
+    unit: 'serviço',
+    description: 'Instalação com tubulação de cobre isolada individualmente, suportes reforçados e teste elétrico e de carga de fluido.',
+    defaultWarrantyMonths: 12
+  },
+  {
+    id: 'cat-6',
+    name: 'Carga de Gás R410A / R32 (Recarga completa c/ Vácuo)',
+    category: 'Carga de Gás / Fluido',
+    type: 'servico',
+    defaultPrice: 280.00,
+    costPrice: 65.00,
+    unit: 'serviço',
+    description: 'Localização e reparo de microvazamento nas flanges, vácuo no sistema e pesagem de fluido por balança digital de precisão.',
+    defaultWarrantyMonths: 3
+  },
+  {
+    id: 'cat-7',
+    name: 'Troca de Capacitor de Partida (Compressor / Ventilador)',
+    category: 'Conserto & Reparo',
+    type: 'servico',
+    defaultPrice: 190.00,
+    costPrice: 35.00,
+    unit: 'serviço',
+    description: 'Substituição de capacitor esgotado por componente novo com medição de capacitância por capacímetro e teste de corrente.',
+    defaultWarrantyMonths: 3
+  },
+  {
+    id: 'cat-8',
+    name: 'Troca / Reparo de Placa Eletrônica Inverter',
+    category: 'Conserto & Reparo',
+    type: 'servico',
+    defaultPrice: 480.00,
+    costPrice: 210.00,
+    unit: 'serviço',
+    description: 'Diagnóstico de código de erro, substituição de placa principal ou IPM e configuração de comunicação entre unidades.',
+    defaultWarrantyMonths: 6
+  },
+  {
+    id: 'cat-9',
+    name: 'Desobstrução e Limpeza da Linha de Dreno',
+    category: 'Conserto & Reparo',
+    type: 'servico',
+    defaultPrice: 140.00,
+    costPrice: 15.00,
+    unit: 'serviço',
+    description: 'Desentupimento de dreno transbordando água, limpeza química da tubulação e teste de vazão contínua.',
+    defaultWarrantyMonths: 3
+  },
+  {
+    id: 'cat-10',
+    name: 'Desinstalação com Recolhimento de Gás',
+    category: 'Instalação',
+    type: 'servico',
+    defaultPrice: 180.00,
+    costPrice: 20.00,
+    unit: 'serviço',
+    description: 'Pump down para recolhimento total do gás na condensadora, desconexão segura de tubulação e fiação elétrica.',
+    defaultWarrantyMonths: 1
+  },
+  {
+    id: 'cat-11',
+    name: 'Visita Técnica & Diagnóstico Pericial',
+    category: 'Visita & Laudo',
+    type: 'servico',
+    defaultPrice: 120.00,
+    costPrice: 30.00,
+    unit: 'serviço',
+    description: 'Avaliação técnica no local com testes de pressão, corrente e medição de salto térmico. Valor abatido caso o serviço seja aprovado.',
+    defaultWarrantyMonths: 1
+  },
+  {
+    id: 'cat-12',
+    name: 'Capacitor Duplo 35+5 uF 450V Epcos / Dugold',
+    category: 'Peças & Componentes',
+    type: 'peca',
+    defaultPrice: 65.00,
+    costPrice: 28.00,
+    unit: 'un',
+    description: 'Capacitor metálico anti-explosão para compressores rotativos de 12.000 a 18.000 BTUs.',
+    defaultWarrantyMonths: 6
+  },
+  {
+    id: 'cat-13',
+    name: 'Fluido Refrigerante R410A Dupont / Chemours (kg)',
+    category: 'Insumos & Materiais',
+    type: 'peca',
+    defaultPrice: 90.00,
+    costPrice: 42.00,
+    unit: 'kg',
+    description: 'Fluido virgem de alta pureza para sistemas inverter e convencionais.',
+    defaultWarrantyMonths: 3
+  }
+];
+
+export const initialReceipts: Receipt[] = [
+  {
+    id: 'REC-2026-001',
+    receiptNumber: '001/2026',
+    customerId: 'c1',
+    customerName: 'Ana Silva Santos',
+    customerCpfCnpj: '123.456.789-00',
+    customerPhone: '(11) 98765-4321',
+    amount: 180.00,
+    amountInWords: 'Cento e oitenta reais',
+    paymentMethod: 'Pix',
+    paymentDate: '2026-06-25',
+    serviceDescription: 'Higienização completa preventiva de Split High Wall 9.000 BTUs com aplicação de bactericida hospitalar e limpeza da bandeja de dreno.',
+    linkedOsId: 'OS-2026-0001',
+    signatureUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60"><path d="M10 40 Q 50 10, 90 35 T 180 25" stroke="%231d4ed8" stroke-width="3" fill="none"/></svg>',
+    notes: 'Pagamento via Pix confirmado na hora da entrega técnica. Garantia de 90 dias.',
+    createdAt: '2026-06-25T16:30:00Z'
+  },
+  {
+    id: 'REC-2026-002',
+    receiptNumber: '002/2026',
+    customerId: 'c2',
+    customerName: 'Restaurante Sabor & Brasa Ltda',
+    customerCpfCnpj: '12.345.678/0001-99',
+    customerPhone: '(11) 3222-4455',
+    amount: 265.00,
+    amountInWords: 'Duzentos e sessenta e cinco reais',
+    paymentMethod: 'Transferência Bancária',
+    paymentDate: '2026-06-21',
+    serviceDescription: 'Desobstrução do dreno e higienização química de serpentina Piso Teto 36.000 BTUs na cozinha industrial c/ fornecimento de pastilha biocida.',
+    linkedOsId: 'OS-2026-0002',
+    notes: 'Comprovante emitido para prestação de contas da empresa.',
+    createdAt: '2026-06-21T11:00:00Z'
   }
 ];
