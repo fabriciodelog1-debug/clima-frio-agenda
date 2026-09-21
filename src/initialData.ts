@@ -1,4 +1,4 @@
-import { Customer, Equipment, Appointment, ServiceOrder, Transaction, PMOCPlan } from './types';
+import { Customer, Equipment, Appointment, ServiceOrder, Transaction, PMOCPlan, DiagnosticReport } from './types';
 
 export const initialCustomers: Customer[] = [
   {
@@ -475,5 +475,88 @@ export const initialPMOCPlans: PMOCPlan[] = [
         observations: 'Vistoria e manutenção mensal realizada. Sistema operando em alta eficiência.'
       }
     ]
+  }
+];
+
+export const initialDiagnosticReports: DiagnosticReport[] = [
+  {
+    id: 'LDO-2026-001',
+    date: '2026-07-03',
+    customerId: 'c1',
+    equipmentId: 'e1',
+    osId: 'OS-2026-0003',
+    technicianName: 'Carlos Eduardo Lima - Técnico Mecânico (CFT 123456-SP)',
+    reportType: 'conserto_realizado',
+    symptomReported: 'O aparelho ligava a ventilação interna, mas não resfriava o ambiente. Condensadora externa apresentava zumbido contínuo e desarmava após 2 minutos.',
+    failureCause: 'Capacitor de partida do compressor em curto/esgotado (capacitância residual de apenas 8µF, sendo a nominal de 35µF). Identificado também microvazamento de gás refrigerante na flange de 3/8 da válvula de sucção da condensadora por fadiga do cobre.',
+    repairActionTaken: 'Substituição do capacitor de partida por modelo original blindado 35µF/450VAC. Corte e refação completa da flange com recozimento do tubo. Teste de estanqueidade pressurizado com Nitrogênio a 250 PSI por 40min (sem queda de pressão). Vácuo profundo atingindo 380 Microns. Recarga completa de fluido R410A por balança digital de precisão (850g conforme etiqueta do fabricante).',
+    gasType: 'R410A',
+    suctionPressurePsi: 122,
+    dischargePressurePsi: 340,
+    supplyTempC: 8.5,
+    returnTempC: 22.8,
+    voltageV: 220,
+    nominalCurrentA: 5.4,
+    measuredCurrentA: 5.1,
+    vacuumMicrons: 380,
+    capacitorMicrofarad: 'Nominal: 35 µF | Medido antigo: 8 µF | Novo instalado: 35.2 µF',
+    leakTestPassed: true,
+    drainageTestPassed: true,
+    electricalSafetyPassed: true,
+    thermalEfficiencyPassed: true,
+    beforePhotoUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80',
+    beforePhotoDescription: 'Flange danificada com indício de óleo na conexão da condensadora e capacitor estufado.',
+    afterPhotoUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=400&q=80',
+    afterPhotoDescription: 'Nova flange usinada, capacitor blindado substituído e aparelho gelando com Delta T de 14.3°C.',
+    partsReplaced: [
+      { name: 'Capacitor Eletrolítico Blindado 35µF 450VAC', code: 'CAP-35-450', quantity: 1, unitPrice: 85.00, warrantyMonths: 6 },
+      { name: 'Fluido Refrigerante Ecológico R410A (Carga por balança)', code: 'GAS-R410A-850', quantity: 1, unitPrice: 160.00, warrantyMonths: 3 },
+      { name: 'Porca Flangeada de Latão Forjado 3/8"', code: 'FLG-38-LT', quantity: 1, unitPrice: 25.00, warrantyMonths: 12 }
+    ],
+    laborValue: 250.00,
+    partsValue: 270.00,
+    totalValue: 520.00,
+    finalVerdict: 'Aparelho liberado em perfeito funcionamento e rendimento térmico ótimo. Salto térmico (Delta T) de 14.3°C com insuflamento em 8.5°C. Corrente e pressão estabilizadas dentro dos limites do fabricante.',
+    warrantyDays: 90,
+    recommendations: 'Manter os filtros da unidade interna limpos mensalmente com água morna. Não obstruir a saída de ar da unidade externa condensadora.'
+  },
+  {
+    id: 'LDO-2026-002',
+    date: '2026-06-20',
+    customerId: 'c2',
+    equipmentId: 'e3',
+    osId: 'OS-2026-0002',
+    technicianName: 'Carlos Eduardo Lima - Técnico Mecânico (CFT 123456-SP)',
+    reportType: 'conserto_realizado',
+    symptomReported: 'Vazamento constante de água pela carenagem do Piso Teto na cozinha, pingando sobre a bancada, e odor desagradável.',
+    failureCause: 'Bandeja de condensado e mangueira de dreno de 3/4" totalmente bloqueadas por biofilme bacteriano e resíduos de gordura em suspensão no ar. Acúmulo de sujeira nas aletas da serpentina reduzindo a troca de calor.',
+    repairActionTaken: 'Desmontagem da carenagem frontal, desobstrução mecânica da linha de dreno com mangueira desentupidora de alta pressão, lavagem química completa com bactericida neutro específico para alumínio. Aplicação de pastilha bactericida no reservatório do dreno e teste de fluxo hídrico contínuo de 5 litros.',
+    gasType: 'R410A',
+    suctionPressurePsi: 118,
+    dischargePressurePsi: 335,
+    supplyTempC: 9.0,
+    returnTempC: 24.5,
+    voltageV: 220,
+    nominalCurrentA: 14.2,
+    measuredCurrentA: 13.8,
+    vacuumMicrons: undefined,
+    capacitorMicrofarad: 'Verificado dentro da tolerância de fábrica (±5%)',
+    leakTestPassed: true,
+    drainageTestPassed: true,
+    electricalSafetyPassed: true,
+    thermalEfficiencyPassed: true,
+    beforePhotoUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=400&q=80',
+    beforePhotoDescription: 'Bandeja com acúmulo de biofilme e dreno bloqueado transbordando água.',
+    afterPhotoUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80',
+    afterPhotoDescription: 'Serpentina higienizada, dreno desobstruído com vazão contínua de água testada.',
+    partsReplaced: [
+      { name: 'Pastilha Bactericida Sanitizante de Dreno Air-Care (Cartela c/ 4)', code: 'PAST-BAC-04', quantity: 1, unitPrice: 45.00, warrantyMonths: 3 }
+    ],
+    laborValue: 220.00,
+    partsValue: 45.00,
+    totalValue: 265.00,
+    finalVerdict: 'Dreno 100% desobstruído e testado com 5L de água sem nenhum respingo ou vazamento. Serpentina desincrustada e ar higienizado. Rendimento térmico aprovado.',
+    warrantyDays: 90,
+    recommendations: 'Realizar lavagem quinzenal dos filtros laváveis e manter rotina PMOC mensal rigorosa devido ao ambiente com gordura da cozinha.'
   }
 ];

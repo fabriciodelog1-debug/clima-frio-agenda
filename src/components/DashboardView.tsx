@@ -1,6 +1,6 @@
 import React from 'react';
 import { Customer, Equipment, Appointment, ServiceOrder, Transaction } from '../types';
-import { Users, Cpu, Calendar, FileText, CheckCircle2, Clock, AlertCircle, ChevronRight, TrendingUp, ShieldCheck, Award } from 'lucide-react';
+import { Users, Cpu, Calendar, FileText, CheckCircle2, Clock, AlertCircle, ChevronRight, TrendingUp, ShieldCheck, Award, FileCheck, Wrench, Share2 } from 'lucide-react';
 
 interface DashboardViewProps {
   customers: Customer[];
@@ -145,39 +145,85 @@ export default function DashboardView({
         </div>
       </div>
 
-      {/* PMOC & Technical Responsibility Access Spotlight */}
-      <div 
-        onClick={() => setActiveTab('PMOC / ART')}
-        className="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 shadow-xs hover:shadow-md transition duration-150 cursor-pointer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-      >
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-blue-500/20 text-blue-300 border border-blue-400/30 rounded-xl shrink-0">
-            <ShieldCheck size={26} />
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">
-                Lei Federal 13.589/18
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">
-                ART / TRT Mecânica
-              </span>
+      {/* Featured Technical Modules Grid (Laudo de Diagnóstico + PMOC) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        
+        {/* Spotlight: Laudo Técnico de Diagnóstico e Conserto */}
+        <div 
+          onClick={() => setActiveTab('Laudo & Diagnóstico')}
+          className="bg-emerald-950 text-white p-5 rounded-2xl border border-emerald-800/60 shadow-xs hover:shadow-md transition duration-150 cursor-pointer flex flex-col justify-between gap-4"
+        >
+          <div className="flex items-start gap-3.5">
+            <div className="p-3 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl shrink-0 mt-0.5">
+              <FileCheck size={24} />
             </div>
-            <h3 className="font-extrabold text-sm sm:text-base text-white tracking-tight">
-              Acesso PMOC & Responsabilidade Técnica
-            </h3>
-            <p className="text-xs text-slate-300">
-              Acompanhamento de rotinas periódicas de manutenção, controle de qualidade do ar e termo formal de responsabilidade técnica (ART/TRT).
-            </p>
+            <div className="space-y-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">
+                  PDF & WhatsApp p/ Cliente
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-teal-500/20 text-teal-300 px-2 py-0.5 rounded-full">
+                  Salto Térmico (ΔT)
+                </span>
+              </div>
+              <h3 className="font-extrabold text-sm sm:text-base text-white tracking-tight">
+                Laudo Técnico & Diagnóstico de Conserto
+              </h3>
+              <p className="text-xs text-emerald-200/90 leading-relaxed">
+                Emita relatórios periciais de diagnóstico ou conserto com fotos, testes de pressão/tensão, peças substituídas e garantia para envio direto ao cliente.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-emerald-900/60">
+            <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1.5">
+              <Share2 size={13} /> Envio com 1 clique no WhatsApp
+            </span>
+            <span className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs">
+              <span>Abrir Laudos</span>
+              <ChevronRight size={14} />
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
-          <span className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs">
-            <span>Acessar Módulo PMOC</span>
-            <ChevronRight size={14} />
-          </span>
+        {/* Spotlight: PMOC & ART Mecânica */}
+        <div 
+          onClick={() => setActiveTab('PMOC / ART')}
+          className="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 shadow-xs hover:shadow-md transition duration-150 cursor-pointer flex flex-col justify-between gap-4"
+        >
+          <div className="flex items-start gap-3.5">
+            <div className="p-3 bg-blue-500/20 text-blue-300 border border-blue-400/30 rounded-xl shrink-0 mt-0.5">
+              <ShieldCheck size={24} />
+            </div>
+            <div className="space-y-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">
+                  Lei Federal 13.589/18
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full">
+                  ART / TRT Mecânica
+                </span>
+              </div>
+              <h3 className="font-extrabold text-sm sm:text-base text-white tracking-tight">
+                Acesso PMOC & Responsabilidade Técnica
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Rotinas de manutenção periódica, controle de qualidade do ar, cronograma de vistorias e emissão de ART/TRT conforme exigência da Anvisa.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+            <span className="text-[11px] text-blue-400 font-medium">
+              Conformidade legal obrigatória
+            </span>
+            <span className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs">
+              <span>Módulo PMOC</span>
+              <ChevronRight size={14} />
+            </span>
+          </div>
         </div>
+
       </div>
 
       {/* Main split grid */}

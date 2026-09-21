@@ -179,3 +179,56 @@ export interface PMOCPlan {
   compliancePercentage: number;
 }
 
+export interface DiagnosticPart {
+  name: string;
+  code?: string;
+  quantity: number;
+  unitPrice: number;
+  warrantyMonths?: number;
+}
+
+export interface DiagnosticReport {
+  id: string; // e.g. LDO-2026-001
+  date: string; // YYYY-MM-DD
+  customerId: string;
+  equipmentId: string;
+  osId?: string;
+  technicianName: string;
+  reportType: 'diagnostico' | 'conserto_realizado' | 'manutencao_completa';
+  symptomReported: string;
+  failureCause: string;
+  repairActionTaken: string;
+  // Technical measurements
+  gasType: string;
+  suctionPressurePsi?: number;
+  dischargePressurePsi?: number;
+  supplyTempC?: number; // Insuflamento (°C)
+  returnTempC?: number; // Retorno (°C)
+  voltageV?: number;
+  nominalCurrentA?: number;
+  measuredCurrentA?: number;
+  vacuumMicrons?: number;
+  capacitorMicrofarad?: string;
+  // Verification tests
+  leakTestPassed: boolean;
+  drainageTestPassed: boolean;
+  electricalSafetyPassed: boolean;
+  thermalEfficiencyPassed: boolean;
+  // Photos
+  beforePhotoUrl?: string;
+  beforePhotoDescription?: string;
+  afterPhotoUrl?: string;
+  afterPhotoDescription?: string;
+  // Parts & Financial
+  partsReplaced: DiagnosticPart[];
+  laborValue: number;
+  partsValue: number;
+  totalValue: number;
+  // Verdict & Warranty
+  finalVerdict: string;
+  warrantyDays: number; // e.g. 90
+  recommendations?: string;
+  clientSignatureUrl?: string;
+  technicianSignatureUrl?: string;
+}
+
